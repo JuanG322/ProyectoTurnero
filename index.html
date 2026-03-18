@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - EPS Centro Médico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white min-h-screen flex flex-col items-center justify-center font-sans">
+
+    <div class="mb-8 text-center">
+        <h1 class="text-2xl font-bold text-[#005bb5] leading-tight">
+            Nombre EPS-Centro <br> medico
+        </h1>
+    </div>
+
+    <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-8 w-full max-w-md">
+        
+        <h2 class="text-xl text-gray-600 text-center mb-6 font-medium">Iniciar sesión</h2>
+
+        <form class="flex flex-col gap-5">
+            
+            <div>
+                <select class="w-full border border-gray-400 text-gray-500 rounded-full px-5 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#005bb5] focus:border-transparent appearance-none bg-white">
+                    <option value="" disabled selected>Tipo de identificación</option>
+                    <option value="cc">Cédula de Ciudadanía</option>
+                    <option value="ti">Tarjeta de Identidad</option>
+                    <option value="ce">Cédula de Extranjería</option>
+                </select>
+            </div>
+
+            <div>
+                <input type="text" placeholder="Número Identificación" class="w-full border border-gray-400 text-gray-700 rounded-full px-5 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#005bb5] focus:border-transparent">
+            </div>
+
+            <div>
+                <input type="password" placeholder="Contraseña" class="w-full border border-gray-400 text-gray-700 rounded-full px-5 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#005bb5] focus:border-transparent">
+            </div>
+
+            <div class="flex items-center justify-between mt-4">
+                <a href="#" class="text-sm text-[#005bb5] hover:underline w-32 leading-tight">
+                    ¿Has olvidado tu contraseña?
+                </a>
+                <button type="submit" class="bg-[#005bb5] hover:bg-blue-800 text-white font-medium py-2 px-6 rounded-full transition-colors shadow-sm">
+                    Iniciar sesión
+                </button>
+            </div>
+
+        </form>
+
+        <div class="text-center mt-8 text-sm text-black">
+            <p>Aun no tienes una cuenta?</p>
+            <a href="#" class="text-[#005bb5] hover:underline">Crear una cuenta</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

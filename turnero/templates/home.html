@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio - EPS Centro Médico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white min-h-screen font-sans">
+
+    <!-- Header -->
+    <header class="w-full border-b border-gray-200 bg-white">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold text-[#005bb5] leading-tight">
+                    Nombre EPS-Centro <br class="md:hidden"> médico
+                </h1>
+            </div>
+
+            <div>
+                <button class="border border-[#005bb5] text-[#005bb5] px-4 py-2 rounded-full text-sm font-medium hover:bg-[#005bb5] hover:text-white transition-colors">
+                    Mi perfil
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="max-w-6xl mx-auto px-4 py-8">
+
+        <!-- Saludo -->
+        <section class="mb-8">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800">
+                Hola, {{ nombre_usuario }}
+            </h2>
+            <p class="text-gray-500 mt-2 text-sm md:text-base">
+                Consulta los servicios disponibles y el tiempo estimado de espera en esta sede.
+            </p>
+        </section>
+
+        <!-- Aviso informativo -->
+        <section class="mb-8">
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+                <p class="text-sm md:text-base text-gray-700 leading-relaxed">
+                    Puedes consultar desde aquí el estado de los servicios y los tiempos estimados.
+                    La solicitud de turno solo estará disponible al escanear el código QR ubicado físicamente en la sede.
+                </p>
+            </div>
+        </section>
+
+        <!-- Cards dinámicas -->
+        <section>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+
+                {% for servicio in servicios %}
+                <div class="border border-gray-300 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                        {{ servicio.nombre }}
+                    </h3>
+                    <div class="flex items-center justify-between">
+                        <p class="text-gray-500 text-sm">Tiempo estimado</p>
+                        <span class="text-[#005bb5] font-bold text-lg">
+                            {{ servicio.tiempo_estimado }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+
+            </div>
+        </section>
+
+    </main>
+
+</body>
+</html>

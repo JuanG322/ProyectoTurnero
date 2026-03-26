@@ -1,7 +1,14 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 def inicio(request):
-    return render(request, 'login.html')
+    return render(request, 'Login.html')
+
+def registro(request):
+    if request.method == 'POST':
+        return redirect('home')
+    
+    return render(request, 'Register.html')
+
 def home(request):
     servicios = [
         {"nombre": "Laboratorio", "tiempo_estimado": "Pendiente"},
@@ -13,10 +20,8 @@ def home(request):
     ]
 
     contexto = {
-        "nombre_usuario": "David Sánchez",
+        "nombre_usuario": "Nuevo Usuario", # Temporalmente ponemos un nombre genérico
         "servicios": servicios
     }
 
     return render(request, 'home.html', contexto)
-
-# Create your views here.

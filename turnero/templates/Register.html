@@ -6,6 +6,11 @@
     <title>Registro - Empresa de Salud</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <style>
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+    </style>
     <script>
         tailwind.config = {
             darkMode: 'class', 
@@ -17,7 +22,8 @@
                         'white': '#ffffff', 'soft-border': '#d1d5db',
                         'dark-bg': '#121212', 'dark-card': '#1e1e1e',
                         'dark-text': '#e5e7eb', 'dark-border': '#374151',
-                        'alert-bg': '#eff6ff'
+                        'alert-bg': '#eff6ff',
+                        'rojo': '#dc2626'
                     },
                 },
             },
@@ -42,31 +48,69 @@
             <h2 class="text-2xl text-Dark-Grey dark:text-dark-text font-bold text-center transition-colors duration-300">Crear una cuenta</h2>
         </div>
 
-        <form class="flex flex-col gap-4">
+        <form method="POST" onsubmit="return validarEnvio()" class="flex flex-col gap-4">
+            {% csrf_token %}
             
             <div>
                 <label class="block text-sm text-Dark-Grey dark:text-dark-text font-medium ml-3 mb-1 transition-colors duration-300">Nombre completo</label>
-                <input type="text" placeholder="Ej: Nombre Apellido" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
+                <input type="text" name="nombre_completo" required placeholder="Ej: Nombre Apellido" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
             </div>
 
             <div>
-                <label class="block text-sm text-Dark-Grey dark:text-dark-text font-medium ml-3 mb-1 transition-colors duration-300">Fecha de nacimiento</label>
-                <input type="date" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card transition-colors duration-300" style="color-scheme: light dark;">
+                <label for="tipo_doc" class="block text-sm text-Dark-Grey dark:text-dark-text font-medium ml-3 mb-1 transition-colors duration-300">Tipo de documento</label>
+                <div class="relative">
+                    <select id="tipo_doc" name="tipo_doc" required class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card appearance-none transition-colors duration-300">
+                        <option value="" disabled selected>Seleccione una opción...</option>
+                        <option value="cc">Cédula de Ciudadanía</option>
+                        <option value="ti">Tarjeta de Identidad</option>
+                        <option value="ce">Cédula de Extranjería</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-Light-Grey">
+                        <span class="material-symbols-outlined text-xl">expand_more</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm text-Dark-Grey dark:text-dark-text font-medium ml-3 mb-1 transition-colors duration-300">Número de Identificación</label>
+                <input type="number" min="0" name="identificacion" required placeholder="Ej: 1234567890" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
             </div>
 
             <div>
                 <label class="block text-sm text-Dark-Grey dark:text-dark-text font-medium ml-3 mb-1 transition-colors duration-300">Correo electrónico</label>
-                <input type="email" placeholder="ejemplo@correo.com" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
+                <input type="email" name="correo" required pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}" title="El correo debe terminar en un dominio válido (ej. @gmail.com)" placeholder="ejemplo@empresa.com" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
             </div>
 
             <div>
                 <label class="block text-sm text-Dark-Grey dark:text-dark-text font-medium ml-3 mb-1 transition-colors duration-300">Contraseña</label>
-                <input type="password" placeholder="Contraseña nueva" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
+                <div class="relative">
+                    <input type="password" id="password" name="password" required oninput="validarPassword()" placeholder="Contraseña nueva" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-12 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue transition-colors duration-300 bg-white dark:bg-dark-card placeholder-Light-Grey">
+                    <button type="button" onclick="togglePasswordVisibility('password', 'icono-ojo-1')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-Light-Grey hover:text-Dark-Grey dark:hover:text-dark-text focus:outline-none transition-colors cursor-pointer">
+                        <span id="icono-ojo-1" class="material-symbols-outlined text-xl">visibility</span>
+                    </button>
+                </div>
+                
+                <div class="mt-2 ml-3">
+                    <p class="text-xs font-semibold text-Dark-Grey dark:text-dark-text mb-1">La contraseña debe tener:</p>
+                    <ul class="text-xs text-rojo space-y-1 ml-4 list-disc transition-colors duration-300">
+                        <li id="req-length">Mínimo 10 caracteres</li>
+                        <li id="req-upper">1 letra mayúscula</li>
+                        <li id="req-lower">1 letra minúscula</li>
+                        <li id="req-num">1 número</li>
+                        <li id="req-spec">1 carácter especial (ej. !@#$%)</li>
+                    </ul>
+                </div>
             </div>
             
             <div>
                 <label class="block text-sm text-Dark-Grey dark:text-dark-text font-medium ml-3 mb-1 transition-colors duration-300">Confirmar contraseña</label>
-                <input type="password" placeholder="Repite la contraseña" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
+                <div class="relative">
+                    <input type="password" id="password_confirm" name="password_confirm" required oninput="validarCoincidencia()" placeholder="Repite la contraseña" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-12 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
+                    <button type="button" onclick="togglePasswordVisibility('password_confirm', 'icono-ojo-2')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-Light-Grey hover:text-Dark-Grey dark:hover:text-dark-text focus:outline-none transition-colors cursor-pointer">
+                        <span id="icono-ojo-2" class="material-symbols-outlined text-xl">visibility</span>
+                    </button>
+                </div>
+                <p id="error-coincidencia" class="text-xs text-rojo ml-3 mt-1 hidden">Las contraseñas no coinciden</p>
             </div>
 
             <div class="flex flex-col gap-3 mt-4">
@@ -74,7 +118,7 @@
                     Registrarme
                 </button>
                 
-                <a href="Login.html" class="block w-full bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border hover:bg-soft-border dark:hover:bg-dark-border text-Dark-Grey dark:text-dark-text font-medium py-2.5 rounded-full transition-colors text-center">
+                <a href="{% url 'inicio' %}" class="block w-full bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border hover:bg-soft-border dark:hover:bg-dark-border text-Dark-Grey dark:text-dark-text font-medium py-2.5 rounded-full transition-colors text-center">
                     Ya tengo una cuenta
                 </a>
             </div>
@@ -83,6 +127,9 @@
     </div>
 
     <script>
+        let passwordCumpleRequisitos = false;
+        let contraseñasCoinciden = false;
+
         function toggleTheme() {
             const htmlTag = document.documentElement;
             const themeIcon = document.getElementById('theme-icon');
@@ -93,6 +140,96 @@
                 htmlTag.classList.add('dark');
                 themeIcon.innerText = 'light_mode';
             }
+        }
+
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerText = 'visibility_off'; 
+            } else {
+                input.type = 'password';
+                icon.innerText = 'visibility'; 
+            }
+        }
+
+        function validarPassword() {
+            const pwd = document.getElementById('password').value;
+            const inputElement = document.getElementById('password');
+
+            const rules = [
+                { id: 'req-length', regex: /.{10,}/ },
+                { id: 'req-upper', regex: /[A-Z]/ },
+                { id: 'req-lower', regex: /[a-z]/ },
+                { id: 'req-num', regex: /[0-9]/ },
+                { id: 'req-spec', regex: /[^A-Za-z0-9]/ }
+            ];
+
+            let allValid = true;
+
+            rules.forEach(rule => {
+                const element = document.getElementById(rule.id);
+                if (rule.regex.test(pwd)) {
+                    element.classList.remove('text-rojo');
+                    element.classList.add('text-blue', 'dark:text-light-blue');
+                } else {
+                    element.classList.add('text-rojo');
+                    element.classList.remove('text-blue', 'dark:text-light-blue');
+                    allValid = false;
+                }
+            });
+
+            passwordCumpleRequisitos = allValid;
+
+            if (pwd.length > 0 && !allValid) {
+                inputElement.classList.add('border-rojo', 'focus:ring-rojo');
+                inputElement.classList.remove('border-soft-border', 'dark:border-dark-border', 'focus:ring-blue');
+            } else {
+                inputElement.classList.remove('border-rojo', 'focus:ring-rojo');
+                inputElement.classList.add('border-soft-border', 'dark:border-dark-border', 'focus:ring-blue');
+            }
+            
+            validarCoincidencia();
+        }
+
+        function validarCoincidencia() {
+            const pwd = document.getElementById('password').value;
+            const pwdConfirm = document.getElementById('password_confirm').value;
+            const errorTexto = document.getElementById('error-coincidencia');
+            const inputConfirm = document.getElementById('password_confirm');
+
+            if (pwdConfirm.length === 0) {
+                errorTexto.classList.add('hidden');
+                inputConfirm.classList.remove('border-rojo', 'focus:ring-rojo');
+                inputConfirm.classList.add('border-soft-border', 'dark:border-dark-border', 'focus:ring-blue');
+                contraseñasCoinciden = false;
+                return;
+            }
+
+            if (pwd !== pwdConfirm) {
+                errorTexto.classList.remove('hidden');
+                inputConfirm.classList.add('border-rojo', 'focus:ring-rojo');
+                inputConfirm.classList.remove('border-soft-border', 'dark:border-dark-border', 'focus:ring-blue');
+                contraseñasCoinciden = false;
+            } else {
+                errorTexto.classList.add('hidden');
+                inputConfirm.classList.remove('border-rojo', 'focus:ring-rojo');
+                inputConfirm.classList.add('border-soft-border', 'dark:border-dark-border', 'focus:ring-blue');
+                contraseñasCoinciden = true;
+            }
+        }
+
+        function validarEnvio() {
+            if (!passwordCumpleRequisitos) {
+                alert("Por favor, asegúrate de cumplir con todos los requisitos de la contraseña.");
+                return false; 
+            }
+            if (!contraseñasCoinciden) {
+                alert("Las contraseñas no coinciden. Por favor, verifícalas.");
+                return false; 
+            }
+            return true; 
         }
     </script>
 </body>

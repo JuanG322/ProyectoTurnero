@@ -40,12 +40,23 @@
         
         <h2 class="text-xl text-Dark-Grey dark:text-dark-text text-center mb-6 font-medium transition-colors duration-300">Iniciar sesión</h2>
 
-        <form class="flex flex-col gap-5">
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-sm text-center">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" class="flex flex-col gap-5">
+            {% csrf_token %}
             
             <div class="flex flex-col gap-1">
                 <label for="tipo_doc" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium transition-colors duration-300">Tipo de documento</label>
                 <div class="relative">
-                    <select id="tipo_doc" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card appearance-none transition-colors duration-300">
+                    <select id="tipo_doc" name="tipo_doc" required class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card appearance-none transition-colors duration-300">
                         <option value="" disabled selected>Seleccione una opción...</option>
                         <option value="cc">Cédula de Ciudadanía</option>
                         <option value="ti">Tarjeta de Identidad</option>
@@ -59,13 +70,13 @@
 
             <div class="flex flex-col gap-1">
                 <label for="num_doc" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium transition-colors duration-300">Número de Identificación</label>
-                <input type="text" id="num_doc" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
+                <input type="text" id="num_doc" name="num_doc" required class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
             </div>
 
             <div class="flex flex-col gap-1">
                 <label for="password" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium transition-colors duration-300">Contraseña</label>
                 <div class="relative">
-                    <input type="password" id="password" placeholder="Tu contraseña" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-12 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
+                    <input type="password" id="password" name="password" required placeholder="Tu contraseña" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-12 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
                     <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-4 text-Light-Grey hover:text-Dark-Grey dark:hover:text-dark-text focus:outline-none transition-colors cursor-pointer">
                         <span id="icono-ojo" class="material-symbols-outlined text-xl">visibility</span>
                     </button>

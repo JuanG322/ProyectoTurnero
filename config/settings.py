@@ -78,9 +78,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'turnero_db',        
+        'NAME': 'turnero',        
         'USER': 'root',   
-        'PASSWORD': '',    
+        'PASSWORD': 'sql123',    
         'HOST': 'localhost',          
         'PORT': '3306',           
     }

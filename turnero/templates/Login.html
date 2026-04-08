@@ -77,7 +77,7 @@
                 <label for="password" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium transition-colors duration-300">Contraseña</label>
                 <div class="relative">
                     <input type="password" id="password" name="password" required placeholder="Tu contraseña" class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-12 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors duration-300">
-                    <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-4 text-Light-Grey hover:text-Dark-Grey dark:hover:text-dark-text focus:outline-none transition-colors cursor-pointer">
+                    <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 flex items-center pr-4 text-Light-Grey hover:text-Dark-Grey dark:hover:text-dark-text focus:outline-none transition-colors cursor-pointer">
                         <span id="icono-ojo" class="material-symbols-outlined text-xl">visibility</span>
                     </button>
                 </div>
@@ -110,6 +110,19 @@
             } else {
                 htmlTag.classList.add('dark');
                 themeIcon.innerText = 'light_mode';
+            }
+        }
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const iconoOjo = document.getElementById('icono-ojo');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                iconoOjo.innerText = 'visibility_off';
+            } else {
+                passwordInput.type = 'password';
+                iconoOjo.innerText = 'visibility';
             }
         }
     </script>

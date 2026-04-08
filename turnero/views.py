@@ -94,3 +94,7 @@ def home(request):
     }
 
     return render(request, 'home.html', contexto)
+
+def salir(request):
+    logout(request)
+    return redirect('inicio')

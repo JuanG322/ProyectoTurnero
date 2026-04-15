@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib import messages
+from django.contrib.auth.models import Group
 from .models import Usuario
 
 def inicio(request):
-    # Si el usuario ya inició sesión, no tiene sentido que vea el login, lo mandamos al home
     if request.user.is_authenticated:
         return redirect('home')
 
@@ -14,13 +14,9 @@ def inicio(request):
         password = request.POST.get('password')
 
         try:
-            # Buscamos al usuario en la base de datos por su documento
             usuario = Usuario.objects.get(tipo_documento=tipo_doc, num_documento=num_doc)
             
-            # Verificamos si la contraseña coincide
             if usuario.check_password(password):
-                # Como no estamos usando el sistema de login por defecto (que usa email), 
-                # forzamos el backend de autenticación y hacemos el login manualmente.
                 usuario.backend = 'django.contrib.auth.backends.ModelBackend'
                 login(request, usuario)
                 return redirect('home')
@@ -43,7 +39,6 @@ def registro(request):
         password = request.POST.get('password')
         password_confirm = request.POST.get('password_confirm')
 
-        # Validaciones extra en el backend (por si alguien salta las de JavaScript)
         if password != password_confirm:
             messages.error(request, 'Las contraseñas no coinciden.')
             return render(request, 'Register.html')
@@ -56,16 +51,22 @@ def registro(request):
             messages.error(request, 'Este correo electrónico ya está registrado.')
             return render(request, 'Register.html')
 
-        # Crear el usuario de forma segura
+        # Crear el usuario (Usando los argumentos que ajustamos en el UsuarioManager)
         usuario = Usuario.objects.create_user(
-            identificacion=num_doc,
             email=email,
-            nombre_completo=nombre,
+            num_documento=num_doc,
+            nombre=nombre,
             password=password,
             tipo_documento=tipo_doc
         )
         
-        # Opcional: Iniciar sesión automáticamente tras un registro exitoso
+        # ASIGNACIÓN AL GRUPO 'Paciente' (Cambio autorizado)
+        try:
+            grupo = Group.objects.get(name='Paciente')
+            usuario.groups.add(grupo)
+        except Group.DoesNotExist:
+            pass
+        
         usuario.backend = 'django.contrib.auth.backends.ModelBackend'
         login(request, usuario)
         
@@ -74,7 +75,6 @@ def registro(request):
     return render(request, 'Register.html')
 
 def home(request):
-    # Si alguien intenta entrar a /home sin iniciar sesión, lo devolvemos al login
     if not request.user.is_authenticated:
         return redirect('inicio')
 
@@ -88,7 +88,6 @@ def home(request):
     ]
 
     contexto = {
-        # Ahora inyectamos el nombre real del usuario logueado en la base de datos
         "nombre_usuario": request.user.nombre, 
         "servicios": servicios
     }

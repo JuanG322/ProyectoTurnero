@@ -18,7 +18,6 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 
- #Modifico el URL patterns para incluir la recuperacion al correo
 
 urlpatterns = [
     path('admin/', admin.site.urls),

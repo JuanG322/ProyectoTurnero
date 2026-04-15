@@ -3,31 +3,29 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 
-# ==========================================
-# MODELO DE USUARIOS PERSONALIZADO
-# ==========================================
-
 class UsuarioManager(BaseUserManager):
-    def create_user(self, identificacion, email, nombre_completo, password=None, **extra_fields):
+    def create_user(self, email, num_documento, nombre, password=None, **extra_fields):
         if not email:
             raise ValueError('El usuario debe tener un correo electrónico')
 
         email = self.normalize_email(email)
         user = self.model(
-            num_documento=identificacion,
             email=email,
-            nombre=nombre_completo,
+            num_documento=num_documento,
+            nombre=nombre,
             **extra_fields
         )
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, identificacion, email, nombre_completo, password=None, **extra_fields):
+    def create_superuser(self, email, num_documento, nombre, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('rol', 'admin')
 
+        # Aquí llamamos a create_user con los nombres correctos
+        return self.create_user(email, num_documento, nombre, password, **extra_fields)
         return self.create_user(identificacion, email, nombre_completo, password, **extra_fields)
 
 
@@ -64,9 +62,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         return f"{self.nombre} ({self.num_documento})"
 
 
-# ==========================================
 # 1. TABLAS MAESTRAS
-# ==========================================
 
 class Sede(models.Model):
     cod_sede = models.CharField(max_length=10, primary_key=True)
@@ -93,9 +89,7 @@ class Servicio(models.Model):
         return self.nombre
 
 
-# ==========================================
 # 2. TABLAS INTERMEDIAS Y DEPENDIENTES
-# ==========================================
 
 class SedeServicio(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -123,9 +117,7 @@ class Ventanilla(models.Model):
         unique_together = ('sede', 'cod_ventanilla')
 
 
-# ==========================================
 # 3. RELACIÓN 1 A 1
-# ==========================================
 
 class Configuracion(models.Model):
     sede_servicio = models.OneToOneField(SedeServicio, on_delete=models.CASCADE, primary_key=True)
@@ -139,9 +131,7 @@ class Configuracion(models.Model):
         db_table = 'CONFIGURACIONES'
 
 
-# ==========================================
 # 4. TABLAS DE MOVIMIENTO (Transaccionales)
-# ==========================================
 
 class TokenRecuperacion(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -231,3 +221,9 @@ class HistorialEvento(models.Model):
     class Meta:
         db_table = 'HISTORIAL_EVENTOS'
         unique_together = ('turno', 'fecha_hora_evento')
+
+
+    class Roles:
+        PACIENTE = 'Paciente'
+        OPERADOR = 'Operador'
+        ADMIN = 'Administrador'    

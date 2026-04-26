@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancelar Consulta - EPS Centro Médico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: {
+                'blue': '#0960ae', 'light-blue': '#007dbf', 'Dark-Grey': '#515151',
+                'Light-Grey': '#848484', 'soft-border': '#d1d5db', 'dark-bg': '#121212',
+                'dark-card': '#1e1e1e', 'dark-text': '#e5e7eb', 'dark-border': '#374151'
+            }}}
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
+    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card transition-colors duration-300">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-xl font-bold text-blue dark:text-light-blue">Nombre EPS-Centro médico</h1>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text transition-colors flex items-center">
+                    <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
+                </button>
+                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Cerrar sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto px-4 py-20 text-center">
+        <div class="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-6">
+            <span class="material-symbols-outlined text-4xl text-red-400">construction</span>
+        </div>
+        <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text mb-2">Cancelar consulta</h2>
+        <p class="text-Light-Grey text-sm mb-8">Esta función estará disponible próximamente. Pronto podrás cancelar tus consultas médicas desde aquí.</p>
+        <a href="{% url 'consultas' %}" class="inline-flex items-center gap-2 border border-blue dark:border-light-blue text-blue dark:text-light-blue px-6 py-2.5 rounded-full text-sm font-medium hover:bg-blue hover:text-white transition-colors">
+            <span class="material-symbols-outlined text-base">arrow_back</span>
+            Volver a Consultas Médicas
+        </a>
+    </main>
+    <script>
+        function toggleTheme() {
+            const h = document.documentElement, i = document.getElementById('theme-icon');
+            h.classList.contains('dark') ? (h.classList.remove('dark'), i.innerText = 'dark_mode') : (h.classList.add('dark'), i.innerText = 'light_mode');
+        }
+    </script>
+</body>
+</html>

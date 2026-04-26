@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta Confirmada - EPS Centro Médico</title>
+    <meta name="description" content="Tu consulta médica fue registrada exitosamente.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'blue': '#0960ae', 'light-blue': '#007dbf',
+                        'Dark-Grey': '#515151', 'Light-Grey': '#848484',
+                        'white': '#ffffff', 'soft-border': '#d1d5db',
+                        'dark-bg': '#121212', 'dark-card': '#1e1e1e',
+                        'dark-text': '#e5e7eb', 'dark-border': '#374151',
+                        'alert-bg': '#eff6ff'
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Animación de entrada para la tarjeta de confirmación */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up { animation: slideUp 0.45s ease-out both; }
+
+        /* Animación de aparición del ícono de confirmación */
+        @keyframes checkPop {
+            0%   { transform: scale(0.6); opacity: 0; }
+            70%  { transform: scale(1.1); }
+            100% { transform: scale(1);   opacity: 1; }
+        }
+        .animate-check-pop { animation: checkPop 0.5s ease-out 0.15s both; }
+    </style>
+</head>
+<body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
+
+    <!-- Encabezado principal -->
+    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card transition-colors duration-300">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-xl md:text-2xl font-bold text-blue dark:text-light-blue leading-tight">
+                Nombre EPS-Centro <br class="md:hidden"> médico
+            </h1>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text hover:bg-Light-Grey dark:hover:bg-Dark-Grey transition-colors shadow-sm flex items-center justify-center">
+                    <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
+                </button>
+                <button class="border border-blue dark:border-light-blue text-blue dark:text-light-blue px-4 py-2 rounded-full text-sm font-medium hover:bg-blue hover:text-white transition-colors">
+                    Mi perfil
+                </button>
+                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm">
+                    Cerrar sesión
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <main class="max-w-xl mx-auto px-4 py-12">
+        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl shadow-sm p-8 text-center animate-slide-up transition-colors duration-300">
+
+            <!-- Ícono de éxito -->
+            <div class="flex justify-center mb-5">
+                <div class="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center animate-check-pop">
+                    <span class="material-symbols-outlined text-5xl text-green-500">check_circle</span>
+                </div>
+            </div>
+
+            <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text mb-1">¡Consulta registrada!</h2>
+            <p class="text-Light-Grey text-sm mb-8">
+                Tu consulta médica fue agendada exitosamente. Guarda el código para el día de tu cita.
+            </p>
+
+            <!-- Código visual del turno -->
+            <div class="bg-alert-bg dark:bg-dark-border border border-light-blue dark:border-blue rounded-xl py-6 px-4 mb-8 transition-colors duration-300">
+                <p class="text-xs text-Light-Grey dark:text-dark-text uppercase tracking-widest mb-2">Tu código de turno</p>
+                <p id="codigo-turno" class="text-5xl font-bold text-blue dark:text-light-blue tracking-wider">
+                    {{ cita.codigo_visual }}
+                </p>
+            </div>
+
+            <!-- Detalle de la consulta -->
+            <div class="text-left rounded-xl border border-soft-border dark:border-dark-border overflow-hidden mb-8 transition-colors duration-300">
+
+                <div class="flex items-center gap-3 px-5 py-3.5 border-b border-soft-border dark:border-dark-border">
+                    <span class="material-symbols-outlined text-blue dark:text-light-blue text-xl">location_on</span>
+                    <div>
+                        <p class="text-xs text-Light-Grey">Sede</p>
+                        <p class="text-sm font-medium text-Dark-Grey dark:text-dark-text">{{ cita.sede }}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 px-5 py-3.5 border-b border-soft-border dark:border-dark-border">
+                    <span class="material-symbols-outlined text-blue dark:text-light-blue text-xl">medical_services</span>
+                    <div>
+                        <p class="text-xs text-Light-Grey">Servicio</p>
+                        <p class="text-sm font-medium text-Dark-Grey dark:text-dark-text">{{ cita.servicio }}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 px-5 py-3.5 border-b border-soft-border dark:border-dark-border">
+                    <span class="material-symbols-outlined text-blue dark:text-light-blue text-xl">calendar_today</span>
+                    <div>
+                        <p class="text-xs text-Light-Grey">Fecha</p>
+                        <p class="text-sm font-medium text-Dark-Grey dark:text-dark-text">{{ cita.fecha }}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 px-5 py-3.5">
+                    <span class="material-symbols-outlined text-blue dark:text-light-blue text-xl">schedule</span>
+                    <div>
+                        <p class="text-xs text-Light-Grey">Hora</p>
+                        <p class="text-sm font-medium text-Dark-Grey dark:text-dark-text">{{ cita.hora }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-xs text-Light-Grey mb-8 leading-relaxed">
+                Recuerda presentarte <strong>15 minutos antes</strong> de tu hora asignada.
+                Lleva tu documento de identidad y el código de turno.
+            </p>
+
+            <!-- Botones de acción -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="{% url 'home' %}" id="btn-ir-inicio"
+                   class="flex items-center justify-center gap-2 border border-blue dark:border-light-blue text-blue dark:text-light-blue px-6 py-2.5 rounded-full text-sm font-medium hover:bg-blue hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-base">home</span>
+                    Ir al inicio
+                </a>
+                <a href="{% url 'solicitar_consulta' %}" id="btn-nueva-consulta"
+                   class="flex items-center justify-center gap-2 bg-blue hover:bg-light-blue text-white px-6 py-2.5 rounded-full text-sm font-medium transition-colors shadow-sm">
+                    <span class="material-symbols-outlined text-base">add_circle</span>
+                    Solicitar otra consulta
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function toggleTheme() {
+            const htmlTag = document.documentElement;
+            const themeIcon = document.getElementById('theme-icon');
+            if (htmlTag.classList.contains('dark')) {
+                htmlTag.classList.remove('dark');
+                themeIcon.innerText = 'dark_mode';
+            } else {
+                htmlTag.classList.add('dark');
+                themeIcon.innerText = 'light_mode';
+            }
+        }
+    </script>
+</body>
+</html>

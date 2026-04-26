@@ -62,7 +62,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         return f"{self.nombre} ({self.num_documento})"
 
 
-# 1. TABLAS MAESTRAS
+# 1. TABLAS MAESTRAS -------------------------
 
 class Sede(models.Model):
     cod_sede = models.CharField(max_length=10, primary_key=True)
@@ -89,7 +89,7 @@ class Servicio(models.Model):
         return self.nombre
 
 
-# 2. TABLAS INTERMEDIAS Y DEPENDIENTES
+# 2. TABLAS INTERMEDIAS Y DEPENDIENTES --------------------------
 
 class SedeServicio(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

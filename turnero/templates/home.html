@@ -39,6 +39,13 @@
                     <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
                 </button>
 
+                {% if es_admin %}
+                <a href="{% url 'panel_admin' %}" class="border border-blue dark:border-light-blue text-blue dark:text-light-blue px-4 py-2 rounded-full text-sm font-medium hover:bg-blue dark:hover:bg-light-blue hover:text-white transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-base">admin_panel_settings</span>
+                    Panel Admin
+                </a>
+                {% endif %}
+
                 <button class="border border-blue dark:border-light-blue text-blue dark:text-light-blue px-4 py-2 rounded-full text-sm font-medium hover:bg-blue dark:hover:bg-light-blue hover:text-white transition-colors">
                     Mi perfil
                 </button>
@@ -73,17 +80,27 @@
         <section>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                 {% for servicio in servicios %}
-                <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
-                    <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-4 transition-colors duration-300">
-                        {{ servicio.nombre }}
-                    </h3>
-                    <div class="flex items-center justify-between">
-                        <p class="text-Light-Grey text-sm transition-colors duration-300">Tiempo estimado</p>
-                        <span class="text-blue dark:text-light-blue font-bold text-lg transition-colors duration-300">
-                            {{ servicio.tiempo_estimado }}
-                        </span>
+                {% if servicio.url %}
+                <a href="{% url servicio.url %}" class="block group">
+                {% else %}
+                <div class="block">
+                {% endif %}
+                    <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 {% if servicio.url %}group-hover:border-blue dark:group-hover:border-light-blue{% endif %}">
+                        <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-4 transition-colors duration-300 {% if servicio.url %}group-hover:text-blue dark:group-hover:text-light-blue{% endif %}">
+                            {{ servicio.nombre }}
+                        </h3>
+                        <div class="flex items-center justify-between">
+                            <p class="text-Light-Grey text-sm transition-colors duration-300">Tiempo estimado</p>
+                            <span class="text-blue dark:text-light-blue font-bold text-lg transition-colors duration-300">
+                                {{ servicio.tiempo_estimado }}
+                            </span>
+                        </div>
                     </div>
+                {% if servicio.url %}
+                </a>
+                {% else %}
                 </div>
+                {% endif %}
                 {% endfor %}
             </div>
         </section>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitar Consulta Médica - EPS Centro Médico</title>
+    <meta name="description" content="Solicita tu consulta médica seleccionando sede, servicio, fecha y franja horaria.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'blue': '#0960ae', 'light-blue': '#007dbf',
+                        'Dark-Grey': '#515151', 'Light-Grey': '#848484',
+                        'white': '#ffffff', 'soft-border': '#d1d5db',
+                        'dark-bg': '#121212', 'dark-card': '#1e1e1e',
+                        'dark-text': '#e5e7eb', 'dark-border': '#374151',
+                        'alert-bg': '#eff6ff'
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
+
+    <!-- Encabezado principal -->
+    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card transition-colors duration-300">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-xl md:text-2xl font-bold text-blue dark:text-light-blue leading-tight">
+                Nombre EPS-Centro <br class="md:hidden"> médico
+            </h1>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text hover:bg-Light-Grey dark:hover:bg-Dark-Grey transition-colors shadow-sm flex items-center justify-center">
+                    <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
+                </button>
+                <button class="border border-blue dark:border-light-blue text-blue dark:text-light-blue px-4 py-2 rounded-full text-sm font-medium hover:bg-blue hover:text-white transition-colors">
+                    Mi perfil
+                </button>
+                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm">
+                    Cerrar sesión
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <main class="max-w-2xl mx-auto px-4 py-10">
+
+        <!-- Encabezado de sección -->
+        <section class="mb-8">
+            <a href="{% url 'consultas' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue dark:hover:text-light-blue transition-colors mb-4">
+                <span class="material-symbols-outlined text-base">arrow_back</span>
+                Volver a Consultas Médicas
+            </a>
+            <h2 class="text-2xl md:text-3xl font-bold text-Dark-Grey dark:text-dark-text">
+                Solicitar consulta médica
+            </h2>
+            <p class="text-Light-Grey mt-2 text-sm md:text-base">
+                Completa el formulario para reservar tu lugar. El turno quedará asignado automáticamente.
+            </p>
+        </section>
+
+        <!-- Aviso de horario de atención -->
+        <section class="mb-6">
+            <div class="bg-alert-bg dark:bg-dark-border border border-light-blue dark:border-blue rounded-xl p-4 flex items-start gap-3 transition-colors duration-300">
+                <span class="material-symbols-outlined text-blue dark:text-light-blue mt-0.5">schedule</span>
+                <p class="text-sm text-Dark-Grey dark:text-dark-text leading-relaxed">
+                    Horario de atención: <strong>06:00 – 18:00</strong>, en franjas de 15 minutos.
+                    Solo se aceptan consultas para fechas a partir de hoy.
+                </p>
+            </div>
+        </section>
+
+        <!-- Mensajes de error generales desde la vista -->
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl text-sm text-center">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Tarjeta del formulario -->
+        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl shadow-sm p-8 transition-colors duration-300">
+
+            <form method="POST" id="form-solicitud-consulta" class="flex flex-col gap-6" novalidate>
+                {% csrf_token %}
+
+                <!-- Campo: Sede -->
+                <div class="flex flex-col gap-1">
+                    <label for="id_sede" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Sede</label>
+                    <div class="relative">
+                        <select id="id_sede" name="sede" required
+                            class="w-full border {% if formulario.sede.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card appearance-none transition-colors duration-300">
+                            <option value="">Seleccione una sede...</option>
+                            {% for sede in formulario.sede.field.queryset %}
+                            <option value="{{ sede.pk }}"
+                                {% if formulario.sede.value == sede.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ sede.nombre }}{% if sede.direccion %} — {{ sede.direccion }}{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-Light-Grey">
+                            <span class="material-symbols-outlined text-xl">expand_more</span>
+                        </div>
+                    </div>
+                    {% for error in formulario.sede.errors %}
+                    <p class="mt-1 ml-3 text-xs text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Campo: Servicio -->
+                <div class="flex flex-col gap-1">
+                    <label for="id_servicio" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Servicio</label>
+                    <div class="relative">
+                        <select id="id_servicio" name="servicio" required
+                            class="w-full border {% if formulario.servicio.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card appearance-none transition-colors duration-300">
+                            <option value="">Seleccione un servicio...</option>
+                            {% for srv in formulario.servicio.field.queryset %}
+                            <option value="{{ srv.pk }}"
+                                {% if formulario.servicio.value == srv.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ srv.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-Light-Grey">
+                            <span class="material-symbols-outlined text-xl">expand_more</span>
+                        </div>
+                    </div>
+                    {% for error in formulario.servicio.errors %}
+                    <p class="mt-1 ml-3 text-xs text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Fila: Fecha y Franja horaria -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <!-- Campo: Fecha de la consulta -->
+                    <div class="flex flex-col gap-1">
+                        <label for="id_fecha_turno" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Fecha de la consulta</label>
+                        <input type="date" id="id_fecha_turno" name="fecha_turno" required
+                            value="{{ formulario.fecha_turno.value|default:'' }}"
+                            class="w-full border {% if formulario.fecha_turno.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card transition-colors duration-300">
+                        {% for error in formulario.fecha_turno.errors %}
+                        <p class="mt-1 ml-3 text-xs text-red-500">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Campo: Franja horaria (dropdown 15 min) -->
+                    <div class="flex flex-col gap-1">
+                        <label for="id_hora_consulta" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Hora de la consulta</label>
+                        <div class="relative">
+                            <select id="id_hora_consulta" name="hora_consulta" required
+                                class="w-full border {% if formulario.hora_consulta.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card appearance-none transition-colors duration-300">
+                                <!-- Iterar sobre las franjas del ChoiceField -->
+                                {% for valor, etiqueta in formulario.hora_consulta.field.choices %}
+                                <option value="{{ valor }}"
+                                    {% if formulario.hora_consulta.value == valor %}selected{% endif %}>
+                                    {{ etiqueta }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-Light-Grey">
+                                <span class="material-symbols-outlined text-xl">expand_more</span>
+                            </div>
+                        </div>
+                        {% for error in formulario.hora_consulta.errors %}
+                        <p class="mt-1 ml-3 text-xs text-red-500">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Errores generales (validación cruzada) -->
+                {% if formulario.non_field_errors %}
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl text-sm">
+                    {% for error in formulario.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Botones de acción -->
+                <div class="flex items-center justify-between mt-2 pt-4 border-t border-soft-border dark:border-dark-border">
+                    <a href="{% url 'consultas' %}" class="text-sm text-Light-Grey hover:text-blue dark:hover:text-light-blue transition-colors">
+                        Cancelar
+                    </a>
+                    <button type="submit" id="btn-solicitar"
+                        class="bg-blue hover:bg-light-blue text-white font-medium py-2.5 px-8 rounded-full transition-colors shadow-sm flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">event_available</span>
+                        Solicitar consulta
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function toggleTheme() {
+            const htmlTag = document.documentElement;
+            const themeIcon = document.getElementById('theme-icon');
+            if (htmlTag.classList.contains('dark')) {
+                htmlTag.classList.remove('dark');
+                themeIcon.innerText = 'dark_mode';
+            } else {
+                htmlTag.classList.add('dark');
+                themeIcon.innerText = 'light_mode';
+            }
+        }
+
+        /* Establecer la fecha mínima en el campo como hoy (validación client-side) */
+        document.addEventListener('DOMContentLoaded', function () {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('id_fecha_turno').setAttribute('min', hoy);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultas Médicas - EPS Centro Médico</title>
+    <meta name="description" content="Gestiona tus consultas médicas: solicitar, ver, cancelar o reprogramar.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'blue': '#0960ae', 'light-blue': '#007dbf',
+                        'Dark-Grey': '#515151', 'Light-Grey': '#848484',
+                        'white': '#ffffff', 'soft-border': '#d1d5db',
+                        'dark-bg': '#121212', 'dark-card': '#1e1e1e',
+                        'dark-text': '#e5e7eb', 'dark-border': '#374151',
+                        'alert-bg': '#eff6ff'
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
+
+    <!-- Encabezado principal -->
+    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card transition-colors duration-300">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-xl md:text-2xl font-bold text-blue dark:text-light-blue leading-tight">
+                Nombre EPS-Centro <br class="md:hidden"> médico
+            </h1>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text hover:bg-Light-Grey dark:hover:bg-Dark-Grey transition-colors shadow-sm flex items-center justify-center">
+                    <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
+                </button>
+                <button class="border border-blue dark:border-light-blue text-blue dark:text-light-blue px-4 py-2 rounded-full text-sm font-medium hover:bg-blue hover:text-white transition-colors">
+                    Mi perfil
+                </button>
+                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm">
+                    Cerrar sesión
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <main class="max-w-4xl mx-auto px-4 py-10">
+
+        <!-- Encabezado de sección con botón de regreso -->
+        <section class="mb-8">
+            <a href="{% url 'home' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue dark:hover:text-light-blue transition-colors mb-4">
+                <span class="material-symbols-outlined text-base">arrow_back</span>
+                Volver al inicio
+            </a>
+            <h2 class="text-2xl md:text-3xl font-bold text-Dark-Grey dark:text-dark-text">
+                Consultas Médicas
+            </h2>
+            <p class="text-Light-Grey mt-2 text-sm md:text-base">
+                Selecciona la acción que deseas realizar con tus consultas médicas.
+            </p>
+        </section>
+
+        <!-- Cuadrícula de tarjetas de acción -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+            <!-- Tarjeta 1: Solicitar consulta (acción principal) -->
+            <a href="{% url 'solicitar_consulta' %}" id="card-solicitar"
+               class="group bg-blue hover:bg-light-blue rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-4">
+                <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-white">event_available</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-white mb-1">Solicitar consulta</h3>
+                    <p class="text-white/75 text-sm leading-relaxed">
+                        Reserva un nuevo turno seleccionando sede, servicio, fecha y hora.
+                    </p>
+                </div>
+                <div class="flex items-center gap-1 text-white/80 text-sm mt-auto">
+                    <span>Continuar</span>
+                    <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+            </a>
+
+            <!-- Tarjeta 2: Ver mis consultas -->
+            <a href="{% url 'mis_consultas' %}" id="card-mis-consultas"
+               class="group bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue dark:hover:border-light-blue transition-all duration-300 flex flex-col gap-4">
+                <div class="w-12 h-12 rounded-full bg-alert-bg dark:bg-dark-border flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-blue dark:text-light-blue">assignment</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-1">Ver mis consultas</h3>
+                    <p class="text-Light-Grey text-sm leading-relaxed">
+                        Consulta el listado de tus turnos activos y su estado actual.
+                    </p>
+                </div>
+                <div class="flex items-center gap-1 text-blue dark:text-light-blue text-sm mt-auto">
+                    <span>Ver listado</span>
+                    <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+            </a>
+
+            <!-- Tarjeta 3: Cancelar consulta -->
+            <a href="{% url 'cancelar_consulta' %}" id="card-cancelar"
+               class="group bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-red-400 transition-all duration-300 flex flex-col gap-4">
+                <div class="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-red-500">event_busy</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-1">Cancelar consulta</h3>
+                    <p class="text-Light-Grey text-sm leading-relaxed">
+                        Cancela una consulta médica programada que ya no puedas asistir.
+                    </p>
+                </div>
+                <div class="flex items-center gap-1 text-red-400 text-sm mt-auto">
+                    <span>Gestionar</span>
+                    <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+            </a>
+
+            <!-- Tarjeta 4: Reprogramar consulta -->
+            <a href="{% url 'reprogramar_consulta' %}" id="card-reprogramar"
+               class="group bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-yellow-400 transition-all duration-300 flex flex-col gap-4">
+                <div class="w-12 h-12 rounded-full bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-yellow-500">update</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-1">Reprogramar consulta</h3>
+                    <p class="text-Light-Grey text-sm leading-relaxed">
+                        Cambia la fecha u hora de una consulta ya agendada.
+                    </p>
+                </div>
+                <div class="flex items-center gap-1 text-yellow-500 text-sm mt-auto">
+                    <span>Modificar</span>
+                    <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        function toggleTheme() {
+            const htmlTag = document.documentElement;
+            const themeIcon = document.getElementById('theme-icon');
+            if (htmlTag.classList.contains('dark')) {
+                htmlTag.classList.remove('dark');
+                themeIcon.innerText = 'dark_mode';
+            } else {
+                htmlTag.classList.add('dark');
+                themeIcon.innerText = 'light_mode';
+            }
+        }
+    </script>
+</body>
+</html>

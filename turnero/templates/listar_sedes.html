@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sedes - Panel de Administración</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: {
+            'blue': '#0960ae', 'light-blue': '#007dbf', 'Dark-Grey': '#515151',
+            'Light-Grey': '#848484', 'soft-border': '#d1d5db', 'dark-bg': '#121212',
+            'dark-card': '#1e1e1e', 'dark-text': '#e5e7eb', 'dark-border': '#374151',
+            'alert-bg': '#eff6ff'
+        }}}}
+    </script>
+</head>
+<body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
+    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-xl font-bold text-blue dark:text-light-blue">Nombre EPS-Centro médico</h1>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text transition-colors flex items-center">
+                    <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
+                </button>
+                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Cerrar sesión</a>
+            </div>
+        </div>
+    </header>
+    <main class="max-w-4xl mx-auto px-4 py-10">
+        <section class="mb-8">
+            <a href="{% url 'panel_admin' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue transition-colors mb-4">
+                <span class="material-symbols-outlined text-base">arrow_back</span> Volver al panel
+            </a>
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">Sedes registradas</h2>
+                <a href="{% url 'crear_sede' %}" class="bg-blue hover:bg-light-blue text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base">add</span> Nueva sede
+                </a>
+            </div>
+        </section>
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'success' %}bg-green-100 border-green-400 text-green-700{% else %}bg-red-100 border-red-400 text-red-700{% endif %} border px-4 py-3 rounded-xl text-sm text-center mb-2">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if not sedes %}
+        <div class="text-center py-20">
+            <span class="material-symbols-outlined text-5xl text-Light-Grey mb-4">location_off</span>
+            <p class="text-Dark-Grey dark:text-dark-text font-medium">No hay sedes registradas</p>
+            <p class="text-Light-Grey text-sm mt-1">Crea la primera sede desde el botón de arriba.</p>
+        </div>
+        {% else %}
+        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl overflow-hidden shadow-sm">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-soft-border dark:border-dark-border bg-gray-50 dark:bg-dark-border">
+                        <th class="text-left px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Código</th>
+                        <th class="text-left px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Nombre</th>
+                        <th class="text-left px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Dirección</th>
+                        <th class="text-center px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sede in sedes %}
+                    <tr class="border-b border-soft-border dark:border-dark-border last:border-b-0 hover:bg-gray-50 dark:hover:bg-dark-border/50 transition-colors">
+                        <td class="px-5 py-3 font-mono text-blue dark:text-light-blue font-medium">{{ sede.cod_sede }}</td>
+                        <td class="px-5 py-3 text-Dark-Grey dark:text-dark-text">{{ sede.nombre }}</td>
+                        <td class="px-5 py-3 text-Light-Grey">{{ sede.direccion|default:"—" }}</td>
+                        <td class="px-5 py-3 text-center">
+                            {% if sede.activo %}
+                            <span class="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium px-3 py-1 rounded-full">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Activa
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-medium px-3 py-1 rounded-full">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span> Inactiva
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </main>
+    <script>
+        function toggleTheme() { const h=document.documentElement,i=document.getElementById('theme-icon'); h.classList.contains('dark')?(h.classList.remove('dark'),i.innerText='dark_mode'):(h.classList.add('dark'),i.innerText='light_mode'); }
+    </script>
+</body>
+</html>

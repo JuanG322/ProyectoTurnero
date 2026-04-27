@@ -15,6 +15,10 @@ urlpatterns = [
     path('consulta/mis/', views.mis_consultas, name='mis_consultas'),
     path('consulta/cancelar/', views.cancelar_consulta, name='cancelar_consulta'),
     path('consulta/reprogramar/', views.reprogramar_consulta, name='reprogramar_consulta'),
+    path('consulta/reprogramar/<uuid:turno_id>/', views.reprogramar_consulta_detalle, name='reprogramar_consulta_detalle'),
+
+    # API — Franjas horarias disponibles (AJAX)
+    path('consulta/api/franjas-disponibles/', views.api_franjas_disponibles, name='api_franjas_disponibles'),
 
     # Panel de Administración (RBAC — solo superusuarios o staff+Administrador)
     path('admin-panel/', views.panel_admin, name='panel_admin'),

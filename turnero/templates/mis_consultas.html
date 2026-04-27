@@ -94,6 +94,12 @@
                             <span class="material-symbols-outlined text-sm">calendar_today</span>
                             {{ turno.fecha_turno }}
                         </span>
+                        {% if turno.hora_cita %}
+                        <span class="inline-flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            {{ turno.hora_cita|time:"H:i" }}
+                        </span>
+                        {% endif %}
                         <span class="inline-flex items-center gap-1">
                             <span class="material-symbols-outlined text-sm">tag</span>
                             Consecutivo {{ turno.consecutivo_diario }}
@@ -101,12 +107,29 @@
                     </div>
                 </div>
 
-                <!-- Etiqueta de estado -->
-                <div class="flex-shrink-0">
+                <!-- Acciones y etiqueta de estado -->
+                <div class="flex-shrink-0 flex flex-col items-end gap-2">
                     <span class="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium px-3 py-1 rounded-full">
                         <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
                         En espera
                     </span>
+                    <div class="flex items-center gap-2">
+                        <a href="{% url 'reprogramar_consulta_detalle' turno.pk %}"
+                           class="inline-flex items-center gap-1 border border-blue dark:border-light-blue text-blue dark:text-light-blue px-3 py-1.5 rounded-full text-xs font-medium hover:bg-blue hover:text-white dark:hover:bg-light-blue transition-colors">
+                            <span class="material-symbols-outlined text-sm">edit_calendar</span>
+                            Reprogramar
+                        </a>
+                        <form method="POST" action="{% url 'cancelar_consulta' %}" class="inline"
+                              onsubmit="return confirm('¿Cancelar la consulta {{ turno.codigo_visual }}?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="turno_id" value="{{ turno.pk }}">
+                            <button type="submit"
+                                class="inline-flex items-center gap-1 border border-red-400 text-red-500 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-red-500 hover:text-white transition-colors">
+                                <span class="material-symbols-outlined text-sm">cancel</span>
+                                Cancelar
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
             {% endfor %}

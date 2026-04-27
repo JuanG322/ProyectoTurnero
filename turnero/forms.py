@@ -8,7 +8,7 @@ from datetime import timedelta, datetime as dt
 from django import forms
 from django.utils import timezone
 
-from .models import Sede, SedeServicio, Servicio
+from .models import Sede, SedeServicio, Servicio, Turno
 
 
 def _generar_franjas_horarias():
@@ -35,10 +35,14 @@ class SolicitudConsultaForm(forms.Form):
     """
     Formulario para solicitar una consulta médica.
 
-    No hereda de ModelForm porque el modelo Turno requiere campos
-    calculados (consecutivo_diario, codigo_visual, sede_servicio)
-    que se resuelven en la vista antes de guardar.
+    Recibe el usuario autenticado como parámetro para validar
+    conflictos de doble reserva.
     """
+
+    def __init__(self, *args, usuario=None, **kwargs):
+        """Almacena el usuario para las validaciones de doble reserva."""
+        super().__init__(*args, **kwargs)
+        self.usuario = usuario
 
     # Selección de sede (solo sedes activas)
     sede = forms.ModelChoiceField(
@@ -107,25 +111,70 @@ class SolicitudConsultaForm(forms.Form):
 
     def clean(self):
         """
-        Validación cruzada: si la consulta es para hoy, la franja horaria
-        seleccionada no debe corresponder a una hora ya transcurrida.
+        Validación cruzada:
+        1. Si la consulta es para hoy, la franja no debe haber pasado.
+        2. El mismo usuario no puede tener dos consultas en la misma fecha y hora.
+        3. No puede haber dos consultas en la misma SedeServicio, fecha y hora.
         """
         cleaned = super().clean()
         fecha = cleaned.get('fecha_turno')
         hora_str = cleaned.get('hora_consulta')
+        sede = cleaned.get('sede')
+        servicio = cleaned.get('servicio')
 
-        if fecha and hora_str:
-            hoy = timezone.localdate()
-            if fecha == hoy:
-                # Hora actual en la zona horaria de Bogotá
-                ahora = timezone.localtime().time()
-                hora_seleccionada = dt.strptime(hora_str, '%H:%M').time()
-                if hora_seleccionada <= ahora:
-                    self.add_error(
-                        'hora_consulta',
-                        'La franja seleccionada ya pasó. '
-                        'Por favor elige una hora futura para hoy.'
+        if not (fecha and hora_str):
+            return cleaned
+
+        # Convertir la franja horaria a objeto time para comparar
+        hora_obj = dt.strptime(hora_str, '%H:%M').time()
+
+        # --- Validación 1: franja pasada si la fecha es hoy ---
+        hoy = timezone.localdate()
+        if fecha == hoy:
+            ahora = timezone.localtime().time()
+            if hora_obj <= ahora:
+                self.add_error(
+                    'hora_consulta',
+                    'La franja seleccionada ya pasó. '
+                    'Por favor elige una hora futura para hoy.'
+                )
+                return cleaned
+
+        # --- Validación 2: doble reserva del mismo usuario ---
+        if self.usuario:
+            existe_usuario = Turno.objects.filter(
+                usuario=self.usuario,
+                fecha_turno=fecha,
+                hora_cita=hora_obj,
+                estado='en_espera',
+            ).exists()
+            if existe_usuario:
+                raise forms.ValidationError(
+                    'Ya tienes una consulta agendada para esta fecha y hora. '
+                    'Por favor selecciona otra franja horaria.'
+                )
+
+        # --- Validación 3: franja ocupada en la misma SedeServicio ---
+        if sede and servicio:
+            try:
+                sede_servicio = SedeServicio.objects.get(
+                    sede=sede, servicio=servicio
+                )
+                existe_franja = Turno.objects.filter(
+                    sede_servicio=sede_servicio,
+                    fecha_turno=fecha,
+                    hora_cita=hora_obj,
+                    estado='en_espera',
+                ).exists()
+                if existe_franja:
+                    raise forms.ValidationError(
+                        'La franja seleccionada ya está ocupada para este '
+                        'servicio en la sede elegida. Elige otra hora o fecha.'
                     )
+            except SedeServicio.DoesNotExist:
+                # Se maneja en la vista
+                pass
+
         return cleaned
 
 

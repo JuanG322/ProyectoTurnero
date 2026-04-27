@@ -51,9 +51,9 @@
                     {% for error in formulario.nombre.errors %}<p class="mt-1 ml-3 text-xs text-red-500">{{ error }}</p>{% endfor %}
                 </div>
                 <div class="flex flex-col gap-1">
-                    <label for="id_direccion" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Dirección <span class="text-Light-Grey font-normal">(opcional)</span></label>
-                    <input type="text" id="id_direccion" name="direccion" maxlength="200" value="{{ formulario.direccion.value|default:'' }}" placeholder="Ej: Calle 10 #25-30"
-                        class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors">
+                    <label for="id_direccion" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Dirección</label>
+                    <input type="text" id="id_direccion" name="direccion" required maxlength="200" value="{{ formulario.direccion.value|default:'' }}" placeholder="Ej: Calle 10 #25-30"
+                        class="w-full border {% if formulario.direccion.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors">
                     {% for error in formulario.direccion.errors %}<p class="mt-1 ml-3 text-xs text-red-500">{{ error }}</p>{% endfor %}
                 </div>
                 {% if formulario.non_field_errors %}

@@ -3,12 +3,16 @@ views.py — Vistas del módulo turnero.
 Gestiona autenticación, registro, inicio y el flujo completo de consultas médicas.
 """
 
-from django.shortcuts import render, redirect
+from datetime import datetime as dt
+
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.db.models import Max
+from django.views.decorators.http import require_GET, require_POST
 
 from .decorators import admin_requerido
 from .forms import (
@@ -156,14 +160,17 @@ def solicitar_consulta(request):
            a la página de confirmación.
     """
     if request.method == 'POST':
-        formulario = SolicitudConsultaForm(request.POST)
+        formulario = SolicitudConsultaForm(request.POST, usuario=request.user)
 
         if formulario.is_valid():
             # Extraer datos validados del formulario
             sede = formulario.cleaned_data['sede']
             servicio = formulario.cleaned_data['servicio']
             fecha = formulario.cleaned_data['fecha_turno']
-            hora = formulario.cleaned_data['hora_consulta']
+            hora_str = formulario.cleaned_data['hora_consulta']
+
+            # Convertir la franja horaria a objeto time para guardar en BD
+            hora_obj = dt.strptime(hora_str, '%H:%M').time()
 
             # Buscar la relación SedeServicio correspondiente
             try:
@@ -186,17 +193,17 @@ def solicitar_consulta(request):
             consecutivo = (max_consecutivo or 0) + 1
 
             # Generar código visual: prefijo + consecutivo de 3 dígitos
-            # Ejemplo: prefijo='LAB' → 'LAB001'
             codigo = f"{sede_servicio.prefijo}{consecutivo:03d}"
 
             # Crear y guardar el Turno en la base de datos
             turno = Turno.objects.create(
                 sede_servicio=sede_servicio,
                 fecha_turno=fecha,
+                hora_cita=hora_obj,
                 consecutivo_diario=consecutivo,
                 codigo_visual=codigo,
                 estado='en_espera',
-                usuario=request.user,   # Vincular al paciente autenticado
+                usuario=request.user,
             )
 
             # Guardar datos en sesión para la página de confirmación
@@ -205,7 +212,7 @@ def solicitar_consulta(request):
                 'sede': sede.nombre,
                 'servicio': servicio.nombre,
                 'fecha': str(fecha),
-                'hora': str(hora),
+                'hora': hora_str,
                 'consecutivo': consecutivo,
             }
 
@@ -213,7 +220,7 @@ def solicitar_consulta(request):
 
     else:
         # Solicitud GET — mostrar formulario vacío
-        formulario = SolicitudConsultaForm()
+        formulario = SolicitudConsultaForm(usuario=request.user)
 
     return render(request, 'solicitud_cita.html', {'formulario': formulario})
 
@@ -252,14 +259,226 @@ def mis_consultas(request):
 
 @login_required(login_url='inicio')
 def cancelar_consulta(request):
-    """Vista para cancelar una consulta médica (función en desarrollo)."""
-    return render(request, 'cancelar_consulta.html')
+    """
+    Vista para cancelar una consulta médica.
+
+    GET  → muestra los turnos activos del usuario con botón cancelar.
+    POST → recibe turno_id, verifica propiedad, cambia estado a 'cancelado'.
+    """
+    if request.method == 'POST':
+        turno_id = request.POST.get('turno_id')
+        turno = get_object_or_404(Turno, pk=turno_id)
+
+        # Verificar que el turno pertenece al usuario autenticado
+        if turno.usuario != request.user:
+            messages.error(request, 'No tienes permiso para cancelar esta consulta.')
+            return redirect('cancelar_consulta')
+
+        # Verificar que el turno aún está en espera
+        if turno.estado != 'en_espera':
+            messages.error(request, 'Esta consulta ya no puede ser cancelada.')
+            return redirect('cancelar_consulta')
+
+        # Cambiar estado a cancelado (no se elimina el registro)
+        turno.estado = 'cancelado'
+        turno.save(update_fields=['estado'])
+
+        messages.success(
+            request,
+            f'La consulta {turno.codigo_visual} ha sido cancelada exitosamente.'
+        )
+        return redirect('mis_consultas')
+
+    # GET — listar turnos activos del usuario
+    consultas_activas = (
+        Turno.objects
+        .filter(usuario=request.user, estado='en_espera')
+        .select_related('sede_servicio__sede', 'sede_servicio__servicio')
+        .order_by('fecha_turno', 'hora_cita')
+    )
+    return render(request, 'cancelar_consulta.html', {'consultas': consultas_activas})
 
 
 @login_required(login_url='inicio')
 def reprogramar_consulta(request):
-    """Vista para reprogramar una consulta médica (función en desarrollo)."""
-    return render(request, 'reprogramar_consulta.html')
+    """
+    Vista de selección: lista los turnos activos del usuario
+    para que elija cuál reprogramar.
+    """
+    consultas_activas = (
+        Turno.objects
+        .filter(usuario=request.user, estado='en_espera')
+        .select_related('sede_servicio__sede', 'sede_servicio__servicio')
+        .order_by('fecha_turno', 'hora_cita')
+    )
+    return render(request, 'reprogramar_consulta.html', {'consultas': consultas_activas})
+
+
+@login_required(login_url='inicio')
+def reprogramar_consulta_detalle(request, turno_id):
+    """
+    Formulario de reprogramación para un turno específico.
+
+    GET  → muestra formulario con nueva fecha y hora.
+    POST → valida disponibilidad, actualiza fecha_turno y hora_cita.
+    """
+    turno = get_object_or_404(Turno, pk=turno_id)
+
+    # Verificar propiedad y estado
+    if turno.usuario != request.user:
+        messages.error(request, 'No tienes permiso para reprogramar esta consulta.')
+        return redirect('reprogramar_consulta')
+
+    if turno.estado != 'en_espera':
+        messages.error(request, 'Esta consulta ya no puede ser reprogramada.')
+        return redirect('reprogramar_consulta')
+
+    from .forms import FRANJAS_HORARIAS
+
+    if request.method == 'POST':
+        nueva_fecha_str = request.POST.get('fecha_turno')
+        nueva_hora_str = request.POST.get('hora_consulta')
+        errores = []
+
+        # Validar fecha
+        from django.utils import timezone
+        try:
+            nueva_fecha = dt.strptime(nueva_fecha_str, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            errores.append('Fecha inválida.')
+            nueva_fecha = None
+
+        if nueva_fecha and nueva_fecha < timezone.localdate():
+            errores.append('La fecha no puede ser en el pasado.')
+
+        # Validar hora
+        horas_validas = {h for h, _ in FRANJAS_HORARIAS}
+        if not nueva_hora_str or nueva_hora_str not in horas_validas:
+            errores.append('Debe seleccionar una franja horaria válida.')
+
+        nueva_hora_obj = None
+        if nueva_hora_str and nueva_hora_str in horas_validas:
+            nueva_hora_obj = dt.strptime(nueva_hora_str, '%H:%M').time()
+
+        # Validar franja pasada si es hoy
+        if nueva_fecha and nueva_hora_obj and nueva_fecha == timezone.localdate():
+            if nueva_hora_obj <= timezone.localtime().time():
+                errores.append('La franja seleccionada ya pasó para hoy.')
+
+        # Validar disponibilidad del slot
+        if nueva_fecha and nueva_hora_obj and not errores:
+            conflicto = Turno.objects.filter(
+                sede_servicio=turno.sede_servicio,
+                fecha_turno=nueva_fecha,
+                hora_cita=nueva_hora_obj,
+                estado='en_espera',
+            ).exclude(pk=turno.pk).exists()
+            if conflicto:
+                errores.append('La franja seleccionada ya está ocupada.')
+
+            # Doble reserva del mismo usuario
+            conflicto_usuario = Turno.objects.filter(
+                usuario=request.user,
+                fecha_turno=nueva_fecha,
+                hora_cita=nueva_hora_obj,
+                estado='en_espera',
+            ).exclude(pk=turno.pk).exists()
+            if conflicto_usuario:
+                errores.append('Ya tienes otra consulta en esa fecha y hora.')
+
+        if errores:
+            for err in errores:
+                messages.error(request, err)
+            contexto = {
+                'turno': turno,
+                'franjas': FRANJAS_HORARIAS,
+                'fecha_valor': nueva_fecha_str or '',
+                'hora_valor': nueva_hora_str or '',
+            }
+            return render(request, 'reprogramar_consulta_detalle.html', contexto)
+
+        # Guardar los cambios
+        turno.fecha_turno = nueva_fecha
+        turno.hora_cita = nueva_hora_obj
+        turno.save(update_fields=['fecha_turno', 'hora_cita'])
+
+        messages.success(
+            request,
+            f'La consulta {turno.codigo_visual} fue reprogramada al '
+            f'{nueva_fecha_str} a las {nueva_hora_str}.'
+        )
+        return redirect('mis_consultas')
+
+    # GET
+    contexto = {
+        'turno': turno,
+        'franjas': FRANJAS_HORARIAS,
+        'fecha_valor': '',
+        'hora_valor': '',
+    }
+    return render(request, 'reprogramar_consulta_detalle.html', contexto)
+
+
+# =============================================================================
+# API — Franjas horarias disponibles (AJAX)
+# =============================================================================
+
+@login_required(login_url='inicio')
+@require_GET
+def api_franjas_disponibles(request):
+    """
+    Endpoint JSON que retorna las franjas horarias libres para una
+    combinación de sede + servicio + fecha.
+
+    Parámetros GET:
+        sede      — cod_sede
+        servicio  — cod_servicio
+        fecha     — YYYY-MM-DD
+    """
+    cod_sede = request.GET.get('sede', '')
+    cod_servicio = request.GET.get('servicio', '')
+    fecha_str = request.GET.get('fecha', '')
+
+    # Validar parámetros requeridos
+    if not (cod_sede and cod_servicio and fecha_str):
+        return JsonResponse({'error': 'Parámetros incompletos.'}, status=400)
+
+    # Parsear la fecha
+    try:
+        fecha = dt.strptime(fecha_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'error': 'Formato de fecha inválido.'}, status=400)
+
+    # Buscar la relación SedeServicio
+    try:
+        sede_servicio = SedeServicio.objects.get(
+            sede_id=cod_sede, servicio_id=cod_servicio
+        )
+    except SedeServicio.DoesNotExist:
+        return JsonResponse({'error': 'Combinación sede-servicio no encontrada.'}, status=404)
+
+    # Obtener las horas ya reservadas (solo turnos activos)
+    # Parámetro opcional: excluir un turno específico (para reprogramación)
+    excluir = request.GET.get('excluir', '')
+    qs_turnos = Turno.objects.filter(
+        sede_servicio=sede_servicio,
+        fecha_turno=fecha,
+        estado='en_espera',
+    )
+    if excluir:
+        qs_turnos = qs_turnos.exclude(pk=excluir)
+
+    horas_ocupadas = set(qs_turnos.values_list('hora_cita', flat=True))
+
+    # Generar franjas libres
+    from .forms import FRANJAS_HORARIAS
+    franjas_libres = []
+    for valor, etiqueta in FRANJAS_HORARIAS:
+        hora_obj = dt.strptime(valor, '%H:%M').time()
+        if hora_obj not in horas_ocupadas:
+            franjas_libres.append({'valor': valor, 'etiqueta': etiqueta})
+
+    return JsonResponse({'franjas': franjas_libres})
 
 
 # =============================================================================

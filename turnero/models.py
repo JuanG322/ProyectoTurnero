@@ -26,7 +26,6 @@ class UsuarioManager(BaseUserManager):
 
         # Aquí llamamos a create_user con los nombres correctos
         return self.create_user(email, num_documento, nombre, password, **extra_fields)
-        return self.create_user(identificacion, email, nombre_completo, password, **extra_fields)
 
 
 class Usuario(AbstractBaseUser, PermissionsMixin):
@@ -67,7 +66,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 class Sede(models.Model):
     cod_sede = models.CharField(max_length=10, primary_key=True)
     nombre = models.CharField(max_length=100)
-    direccion = models.CharField(max_length=200, null=True, blank=True)
+    direccion = models.CharField(max_length=200, default='Sin dirección')
     activo = models.BooleanField(default=True)
 
     class Meta:
@@ -155,6 +154,10 @@ class Turno(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sede_servicio = models.ForeignKey(SedeServicio, on_delete=models.PROTECT)
     fecha_turno = models.DateField()
+    hora_cita = models.TimeField(
+        null=True, blank=True,
+        help_text='Franja horaria de la consulta (intervalos de 15 min).'
+    )
     consecutivo_diario = models.IntegerField()
 
     codigo_visual = models.CharField(max_length=10)

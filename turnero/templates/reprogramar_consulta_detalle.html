@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reprogramar {{ turno.codigo_visual }} - EPS Centro Médico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: {
+            'blue': '#0960ae', 'light-blue': '#007dbf', 'Dark-Grey': '#515151',
+            'Light-Grey': '#848484', 'soft-border': '#d1d5db', 'dark-bg': '#121212',
+            'dark-card': '#1e1e1e', 'dark-text': '#e5e7eb', 'dark-border': '#374151',
+            'alert-bg': '#eff6ff'
+        }}}}
+    </script>
+</head>
+<body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
+    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-xl font-bold text-blue dark:text-light-blue">Nombre EPS-Centro médico</h1>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text transition-colors flex items-center">
+                    <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
+                </button>
+                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Cerrar sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-2xl mx-auto px-4 py-10">
+        <section class="mb-8">
+            <a href="{% url 'reprogramar_consulta' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue transition-colors mb-4">
+                <span class="material-symbols-outlined text-base">arrow_back</span> Volver a selección
+            </a>
+            <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">Reprogramar consulta</h2>
+            <p class="text-Light-Grey mt-2 text-sm">Elige una nueva fecha y hora para tu consulta.</p>
+        </section>
+
+        <!-- Info del turno actual -->
+        <div class="bg-alert-bg dark:bg-dark-border border border-light-blue dark:border-blue rounded-xl p-4 mb-6 flex items-start gap-3">
+            <span class="material-symbols-outlined text-blue dark:text-light-blue mt-0.5">info</span>
+            <div class="text-sm text-Dark-Grey dark:text-dark-text">
+                <p><strong>Turno:</strong> {{ turno.codigo_visual }}</p>
+                <p><strong>Servicio:</strong> {{ turno.sede_servicio.servicio.nombre }} — {{ turno.sede_servicio.sede.nombre }}</p>
+                <p><strong>Fecha actual:</strong> {{ turno.fecha_turno }}{% if turno.hora_cita %} a las {{ turno.hora_cita|time:"H:i" }}{% endif %}</p>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'success' %}bg-green-100 border-green-400 text-green-700{% else %}bg-red-100 border-red-400 text-red-700{% endif %} border px-4 py-3 rounded-xl text-sm text-center mb-2">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Formulario de reprogramación -->
+        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl shadow-sm p-8">
+            <form method="POST" class="flex flex-col gap-6" novalidate>
+                {% csrf_token %}
+
+                <!-- Nueva fecha -->
+                <div class="flex flex-col gap-1">
+                    <label for="id_fecha_turno" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Nueva fecha</label>
+                    <input type="date" id="id_fecha_turno" name="fecha_turno" required
+                        value="{{ fecha_valor }}"
+                        class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card transition-colors">
+                </div>
+
+                <!-- Nueva hora -->
+                <div class="flex flex-col gap-1">
+                    <label for="id_hora_consulta" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Nueva hora</label>
+                    <div class="relative">
+                        <select id="id_hora_consulta" name="hora_consulta" required
+                            class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full pl-5 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card appearance-none transition-colors">
+                            <option value="">Seleccione una franja horaria...</option>
+                            {% for valor, etiqueta in franjas %}
+                            <option value="{{ valor }}" {% if hora_valor == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-Light-Grey">
+                            <span class="material-symbols-outlined text-xl">expand_more</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="flex items-center justify-between mt-2 pt-4 border-t border-soft-border dark:border-dark-border">
+                    <a href="{% url 'reprogramar_consulta' %}" class="text-sm text-Light-Grey hover:text-blue transition-colors">Cancelar</a>
+                    <button type="submit" class="bg-blue hover:bg-light-blue text-white font-medium py-2.5 px-8 rounded-full transition-colors shadow-sm flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">edit_calendar</span>
+                        Reprogramar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function toggleTheme() { const h=document.documentElement,i=document.getElementById('theme-icon'); h.classList.contains('dark')?(h.classList.remove('dark'),i.innerText='dark_mode'):(h.classList.add('dark'),i.innerText='light_mode'); }
+
+        /* AJAX para cargar franjas disponibles al cambiar la fecha */
+        document.addEventListener('DOMContentLoaded', function () {
+            const hoy = new Date().toISOString().split('T')[0];
+            const fechaInput = document.getElementById('id_fecha_turno');
+            const horaSelect = document.getElementById('id_hora_consulta');
+            fechaInput.setAttribute('min', hoy);
+
+            /* Datos del turno actual para la query AJAX */
+            const codSede = '{{ turno.sede_servicio.sede.cod_sede }}';
+            const codServicio = '{{ turno.sede_servicio.servicio.cod_servicio }}';
+            const turnoId = '{{ turno.pk }}';
+
+            function cargarFranjas() {
+                const fecha = fechaInput.value;
+                if (!fecha) return;
+
+                horaSelect.innerHTML = '<option value="">Cargando franjas...</option>';
+                horaSelect.disabled = true;
+
+                const url = `{% url 'api_franjas_disponibles' %}?sede=${encodeURIComponent(codSede)}&servicio=${encodeURIComponent(codServicio)}&fecha=${encodeURIComponent(fecha)}&excluir=${encodeURIComponent(turnoId)}`;
+
+                fetch(url, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                })
+                .then(r => r.json())
+                .then(data => {
+                    horaSelect.innerHTML = '';
+                    horaSelect.disabled = false;
+
+                    if (data.error) {
+                        horaSelect.innerHTML = '<option value="">Error: ' + data.error + '</option>';
+                        return;
+                    }
+                    if (data.franjas.length === 0) {
+                        horaSelect.innerHTML = '<option value="">No hay franjas disponibles</option>';
+                        return;
+                    }
+
+                    const optVacia = document.createElement('option');
+                    optVacia.value = '';
+                    optVacia.textContent = 'Seleccione una franja horaria...';
+                    horaSelect.appendChild(optVacia);
+
+                    data.franjas.forEach(f => {
+                        const opt = document.createElement('option');
+                        opt.value = f.valor;
+                        opt.textContent = f.etiqueta;
+                        horaSelect.appendChild(opt);
+                    });
+                })
+                .catch(() => {
+                    horaSelect.innerHTML = '<option value="">Error al cargar</option>';
+                    horaSelect.disabled = false;
+                });
+            }
+
+            fechaInput.addEventListener('change', cargarFranjas);
+        });
+    </script>
+</body>
+</html>

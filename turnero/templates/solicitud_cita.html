@@ -212,10 +212,75 @@
             }
         }
 
-        /* Establecer la fecha mínima en el campo como hoy (validación client-side) */
+        /* Establecer la fecha mínima en el campo como hoy */
         document.addEventListener('DOMContentLoaded', function () {
             const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('id_fecha_turno').setAttribute('min', hoy);
+            const fechaInput = document.getElementById('id_fecha_turno');
+            fechaInput.setAttribute('min', hoy);
+
+            const sedeSelect = document.getElementById('id_sede');
+            const servicioSelect = document.getElementById('id_servicio');
+            const horaSelect = document.getElementById('id_hora_consulta');
+
+            /* Función para cargar franjas disponibles via AJAX */
+            function cargarFranjas() {
+                const sede = sedeSelect.value;
+                const servicio = servicioSelect.value;
+                const fecha = fechaInput.value;
+
+                /* Solo consultar si los tres campos tienen valor */
+                if (!sede || !servicio || !fecha) return;
+
+                /* Mostrar estado de carga */
+                horaSelect.innerHTML = '<option value="">Cargando franjas...</option>';
+                horaSelect.disabled = true;
+
+                const url = `{% url 'api_franjas_disponibles' %}?sede=${encodeURIComponent(sede)}&servicio=${encodeURIComponent(servicio)}&fecha=${encodeURIComponent(fecha)}`;
+
+                fetch(url, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    horaSelect.innerHTML = '';
+                    horaSelect.disabled = false;
+
+                    if (data.error) {
+                        horaSelect.innerHTML = '<option value="">Error: ' + data.error + '</option>';
+                        return;
+                    }
+
+                    if (data.franjas.length === 0) {
+                        horaSelect.innerHTML = '<option value="">No hay franjas disponibles</option>';
+                        return;
+                    }
+
+                    /* Opción vacía por defecto */
+                    const optVacia = document.createElement('option');
+                    optVacia.value = '';
+                    optVacia.textContent = 'Seleccione una franja horaria...';
+                    horaSelect.appendChild(optVacia);
+
+                    /* Añadir las franjas libres */
+                    data.franjas.forEach(franja => {
+                        const opt = document.createElement('option');
+                        opt.value = franja.valor;
+                        opt.textContent = franja.etiqueta;
+                        horaSelect.appendChild(opt);
+                    });
+                })
+                .catch(() => {
+                    horaSelect.innerHTML = '<option value="">Error al cargar franjas</option>';
+                    horaSelect.disabled = false;
+                });
+            }
+
+            /* Disparar la carga al cambiar sede, servicio o fecha */
+            sedeSelect.addEventListener('change', cargarFranjas);
+            servicioSelect.addEventListener('change', cargarFranjas);
+            fechaInput.addEventListener('change', cargarFranjas);
         });
     </script>
 </body>

@@ -7,18 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: { extend: { colors: {
-                'blue': '#0960ae', 'light-blue': '#007dbf', 'Dark-Grey': '#515151',
-                'Light-Grey': '#848484', 'soft-border': '#d1d5db', 'dark-bg': '#121212',
-                'dark-card': '#1e1e1e', 'dark-text': '#e5e7eb', 'dark-border': '#374151'
-            }}}
-        }
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: {
+            'blue': '#0960ae', 'light-blue': '#007dbf', 'Dark-Grey': '#515151',
+            'Light-Grey': '#848484', 'soft-border': '#d1d5db', 'dark-bg': '#121212',
+            'dark-card': '#1e1e1e', 'dark-text': '#e5e7eb', 'dark-border': '#374151',
+            'alert-bg': '#eff6ff'
+        }}}}
     </script>
 </head>
 <body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
-    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card transition-colors duration-300">
+    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card">
         <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <h1 class="text-xl font-bold text-blue dark:text-light-blue">Nombre EPS-Centro médico</h1>
             <div class="flex items-center gap-3">
@@ -30,22 +28,64 @@
         </div>
     </header>
 
-    <main class="max-w-xl mx-auto px-4 py-20 text-center">
-        <div class="w-16 h-16 rounded-full bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center mx-auto mb-6">
-            <span class="material-symbols-outlined text-4xl text-yellow-500">construction</span>
+    <main class="max-w-4xl mx-auto px-4 py-10">
+        <section class="mb-8">
+            <a href="{% url 'consultas' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue dark:hover:text-light-blue transition-colors mb-4">
+                <span class="material-symbols-outlined text-base">arrow_back</span> Volver a Consultas Médicas
+            </a>
+            <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">Reprogramar consulta</h2>
+            <p class="text-Light-Grey mt-2 text-sm">Selecciona la consulta que deseas reprogramar a una nueva fecha u hora.</p>
+        </section>
+
+        {% if not consultas %}
+        <div class="flex flex-col items-center justify-center py-20 text-center">
+            <div class="w-16 h-16 rounded-full bg-alert-bg dark:bg-dark-border flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-4xl text-Light-Grey">event_note</span>
+            </div>
+            <p class="text-Dark-Grey dark:text-dark-text font-medium mb-1">No tienes consultas activas</p>
+            <p class="text-Light-Grey text-sm mb-6">No hay consultas que puedas reprogramar en este momento.</p>
+            <a href="{% url 'consultas' %}" class="border border-blue dark:border-light-blue text-blue dark:text-light-blue px-6 py-2.5 rounded-full text-sm font-medium hover:bg-blue hover:text-white transition-colors">
+                Volver a Consultas
+            </a>
         </div>
-        <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text mb-2">Reprogramar consulta</h2>
-        <p class="text-Light-Grey text-sm mb-8">Esta función estará disponible próximamente. Pronto podrás cambiar la fecha u hora de tus consultas desde aquí.</p>
-        <a href="{% url 'consultas' %}" class="inline-flex items-center gap-2 border border-blue dark:border-light-blue text-blue dark:text-light-blue px-6 py-2.5 rounded-full text-sm font-medium hover:bg-blue hover:text-white transition-colors">
-            <span class="material-symbols-outlined text-base">arrow_back</span>
-            Volver a Consultas Médicas
-        </a>
+        {% else %}
+        <div class="flex flex-col gap-4">
+            {% for turno in consultas %}
+            <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between gap-4">
+                <div class="flex-shrink-0 w-20 h-20 rounded-xl bg-alert-bg dark:bg-dark-border flex flex-col items-center justify-center">
+                    <p class="text-xs text-Light-Grey uppercase tracking-wide leading-none mb-1">Turno</p>
+                    <p class="text-2xl font-bold text-blue dark:text-light-blue">{{ turno.codigo_visual }}</p>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-Dark-Grey dark:text-dark-text truncate">{{ turno.sede_servicio.servicio.nombre }}</p>
+                    <p class="text-xs text-Light-Grey mt-0.5">{{ turno.sede_servicio.sede.nombre }}</p>
+                    <div class="flex items-center gap-3 mt-2 text-xs text-Light-Grey">
+                        <span class="inline-flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">calendar_today</span>
+                            {{ turno.fecha_turno }}
+                        </span>
+                        {% if turno.hora_cita %}
+                        <span class="inline-flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            {{ turno.hora_cita|time:"H:i" }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex-shrink-0">
+                    <a href="{% url 'reprogramar_consulta_detalle' turno.pk %}"
+                       class="bg-blue hover:bg-light-blue text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center gap-1">
+                        <span class="material-symbols-outlined text-base">edit_calendar</span>
+                        Reprogramar
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </main>
     <script>
-        function toggleTheme() {
-            const h = document.documentElement, i = document.getElementById('theme-icon');
-            h.classList.contains('dark') ? (h.classList.remove('dark'), i.innerText = 'dark_mode') : (h.classList.add('dark'), i.innerText = 'light_mode');
-        }
+        function toggleTheme() { const h=document.documentElement,i=document.getElementById('theme-icon'); h.classList.contains('dark')?(h.classList.remove('dark'),i.innerText='dark_mode'):(h.classList.add('dark'),i.innerText='light_mode'); }
     </script>
 </body>
 </html>

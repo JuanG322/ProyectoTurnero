@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solicitar Consulta Médica - EPS Centro Médico</title>
+    <title>{{ titulo|default:'Solicitar Consulta' }} - EPS Centro Médico</title>
     <meta name="description" content="Solicita tu consulta médica seleccionando sede, servicio, fecha y franja horaria.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
@@ -52,15 +52,15 @@
 
         <!-- Encabezado de sección -->
         <section class="mb-8">
-            <a href="{% url 'consultas' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue dark:hover:text-light-blue transition-colors mb-4">
+            <a href="{% url back_url %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue dark:hover:text-light-blue transition-colors mb-4">
                 <span class="material-symbols-outlined text-base">arrow_back</span>
-                Volver a Consultas Médicas
+                {{ back_label }}
             </a>
             <h2 class="text-2xl md:text-3xl font-bold text-Dark-Grey dark:text-dark-text">
-                Solicitar consulta médica
+                {{ titulo }}
             </h2>
             <p class="text-Light-Grey mt-2 text-sm md:text-base">
-                Completa el formulario para reservar tu lugar. El turno quedará asignado automáticamente.
+                {{ subtitulo }}
             </p>
         </section>
 
@@ -91,6 +91,7 @@
 
             <form method="POST" id="form-solicitud-consulta" class="flex flex-col gap-6" novalidate>
                 {% csrf_token %}
+                <input type="hidden" name="categoria" value="{{ categoria }}">
 
                 <!-- Campo: Sede -->
                 <div class="flex flex-col gap-1">

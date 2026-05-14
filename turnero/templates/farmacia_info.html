@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmacia - EPS Centro Médico</title>
+    <meta name="description" content="Consulta la disponibilidad de las sedes de farmacia y los tiempos de espera.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'blue': '#0960ae', 'light-blue': '#007dbf',
+                        'Dark-Grey': '#515151', 'Light-Grey': '#848484',
+                        'white': '#ffffff', 'soft-border': '#d1d5db',
+                        'dark-bg': '#121212', 'dark-card': '#1e1e1e',
+                        'dark-text': '#e5e7eb', 'dark-border': '#374151',
+                        'alert-bg': '#eff6ff'
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
+
+    <!-- Encabezado -->
+    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card transition-colors duration-300">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-xl md:text-2xl font-bold text-blue dark:text-light-blue leading-tight">
+                Nombre EPS-Centro <br class="md:hidden"> médico
+            </h1>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text hover:bg-Light-Grey dark:hover:bg-Dark-Grey transition-colors shadow-sm flex items-center justify-center">
+                    <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
+                </button>
+                <button class="border border-blue dark:border-light-blue text-blue dark:text-light-blue px-4 py-2 rounded-full text-sm font-medium hover:bg-blue hover:text-white transition-colors">
+                    Mi perfil
+                </button>
+                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm">
+                    Cerrar sesión
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-10">
+
+        <!-- Breadcrumb -->
+        <section class="mb-8">
+            <a href="{% url 'home' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue dark:hover:text-light-blue transition-colors mb-4">
+                <span class="material-symbols-outlined text-base">arrow_back</span>
+                Volver al inicio
+            </a>
+            <h2 class="text-2xl md:text-3xl font-bold text-Dark-Grey dark:text-dark-text">
+                <span class="material-symbols-outlined text-3xl align-middle mr-2 text-blue dark:text-light-blue">medication</span>
+                Farmacia
+            </h2>
+            <p class="text-Light-Grey mt-2 text-sm md:text-base">
+                Consulta las sedes de farmacia disponibles y su tiempo de espera en tiempo real.
+            </p>
+        </section>
+
+        <!-- Aviso QR -->
+        <section class="mb-8">
+            <div class="bg-alert-bg dark:bg-dark-border border border-light-blue dark:border-blue rounded-xl p-4 shadow-sm flex items-start gap-3">
+                <span class="material-symbols-outlined text-blue dark:text-light-blue text-2xl mt-0.5 shrink-0">qr_code_scanner</span>
+                <div>
+                    <p class="text-sm md:text-base text-Dark-Grey dark:text-dark-text font-semibold mb-1">
+                        Servicio con verificación de presencia
+                    </p>
+                    <p class="text-sm text-Light-Grey leading-relaxed">
+                        Para solicitar un turno en farmacia debe estar físicamente en la sede.
+                        <strong class="text-Dark-Grey dark:text-dark-text">Escanee el código QR en la pantalla de la sede</strong> para obtener su turno.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Django Messages -->
+        {% if messages %}
+        <section class="mb-6">
+            {% for msg in messages %}
+            <div class="p-4 rounded-xl text-sm mb-2
+                {% if msg.tags == 'error' %}bg-red-100 border border-red-400 text-red-700
+                {% elif msg.tags == 'success' %}bg-green-100 border border-green-400 text-green-700
+                {% else %}bg-alert-bg border border-light-blue text-Dark-Grey
+                {% endif %}">
+                {{ msg }}
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        <!-- Lista de sedes -->
+        <section>
+            {% if sedes_info %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {% for item in sedes_info %}
+                <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-Dark-Grey dark:text-dark-text">{{ item.sede.nombre }}</h3>
+                            <p class="text-xs text-Light-Grey mt-1 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-xs">location_on</span>
+                                {{ item.sede.direccion }}, {{ item.sede.ciudad }}
+                            </p>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-alert-bg dark:bg-dark-border flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-xl text-blue dark:text-light-blue">local_pharmacy</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-gray-50 dark:bg-dark-border rounded-xl p-3 text-center">
+                            <p class="text-2xl font-bold text-blue dark:text-light-blue">{{ item.en_espera }}</p>
+                            <p class="text-xs text-Light-Grey mt-1">En espera</p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-dark-border rounded-xl p-3 text-center">
+                            <p class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">
+                                {% if item.tiempo_estimado > 0 %}~{{ item.tiempo_estimado }} min{% else %}—{% endif %}
+                            </p>
+                            <p class="text-xs text-Light-Grey mt-1">Tiempo est.</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-soft-border dark:border-dark-border flex items-center gap-2 text-xs text-Light-Grey">
+                        <span class="material-symbols-outlined text-sm">qr_code</span>
+                        Escanee el QR en la sede física para pedir su turno
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-16">
+                <span class="material-symbols-outlined text-6xl text-Light-Grey mb-4">local_pharmacy</span>
+                <h3 class="text-lg font-semibold text-Dark-Grey dark:text-dark-text mb-2">Sin sedes disponibles</h3>
+                <p class="text-Light-Grey text-sm">Actualmente no hay sedes de farmacia registradas en el sistema.</p>
+            </div>
+            {% endif %}
+        </section>
+
+    </main>
+
+    <script>
+        function toggleTheme() {
+            const htmlTag = document.documentElement;
+            const themeIcon = document.getElementById('theme-icon');
+            if (htmlTag.classList.contains('dark')) {
+                htmlTag.classList.remove('dark');
+                themeIcon.innerText = 'dark_mode';
+            } else {
+                htmlTag.classList.add('dark');
+                themeIcon.innerText = 'light_mode';
+            }
+        }
+    </script>
+</body>
+</html>

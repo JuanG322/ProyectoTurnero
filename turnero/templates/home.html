@@ -46,6 +46,13 @@
                 </a>
                 {% endif %}
 
+                {% if es_operador %}
+                <a href="{% url 'panel_operador' %}" class="border border-blue dark:border-light-blue text-blue dark:text-light-blue px-4 py-2 rounded-full text-sm font-medium hover:bg-blue dark:hover:bg-light-blue hover:text-white transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-base">headset_mic</span>
+                    Panel Operador
+                </a>
+                {% endif %}
+
                 <button class="border border-blue dark:border-light-blue text-blue dark:text-light-blue px-4 py-2 rounded-full text-sm font-medium hover:bg-blue dark:hover:bg-light-blue hover:text-white transition-colors">
                     Mi perfil
                 </button>
@@ -86,14 +93,13 @@
                 <div class="block">
                 {% endif %}
                     <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 {% if servicio.url %}group-hover:border-blue dark:group-hover:border-light-blue{% endif %}">
-                        <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-4 transition-colors duration-300 {% if servicio.url %}group-hover:text-blue dark:group-hover:text-light-blue{% endif %}">
-                            {{ servicio.nombre }}
-                        </h3>
                         <div class="flex items-center justify-between">
-                            <p class="text-Light-Grey text-sm transition-colors duration-300">Tiempo estimado</p>
-                            <span class="text-blue dark:text-light-blue font-bold text-lg transition-colors duration-300">
-                                {{ servicio.tiempo_estimado }}
-                            </span>
+                            <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text transition-colors duration-300 {% if servicio.url %}group-hover:text-blue dark:group-hover:text-light-blue{% endif %}">
+                                {{ servicio.nombre }}
+                            </h3>
+                            {% if servicio.url %}
+                            <span class="material-symbols-outlined text-blue dark:text-light-blue text-xl transition-transform group-hover:translate-x-1">arrow_forward</span>
+                            {% endif %}
                         </div>
                     </div>
                 {% if servicio.url %}

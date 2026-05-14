@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consultas Médicas - EPS Centro Médico</title>
-    <meta name="description" content="Gestiona tus consultas médicas: solicitar, ver, cancelar o reprogramar.">
+    <title>Procedimientos Clínicos - EPS Centro Médico</title>
+    <meta name="description" content="Gestiona tus citas de laboratorio y vacunación.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <script>
@@ -57,44 +57,62 @@
                 Volver al inicio
             </a>
             <h2 class="text-2xl md:text-3xl font-bold text-Dark-Grey dark:text-dark-text">
-                Consultas Médicas
+                Procedimientos Clínicos
             </h2>
             <p class="text-Light-Grey mt-2 text-sm md:text-base">
-                Selecciona la acción que deseas realizar con tus consultas médicas.
+                Selecciona el tipo de procedimiento para agendar tu cita programada.
             </p>
         </section>
 
-        <!-- Cuadrícula de tarjetas de acción -->
+        <!-- Cuadrícula de tarjetas -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
-            <!-- Tarjeta 1: Solicitar consulta (acción principal) -->
-            <a href="{% url 'solicitar_consulta' %}?categoria=medicina" id="card-solicitar"
+            <!-- Tarjeta: Laboratorio -->
+            <a href="{% url 'solicitar_consulta' %}?categoria=procedimientos" id="card-laboratorio"
                class="group bg-blue hover:bg-light-blue rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-4">
                 <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-3xl text-white">event_available</span>
+                    <span class="material-symbols-outlined text-3xl text-white">biotech</span>
                 </div>
                 <div>
-                    <h3 class="text-xl font-semibold text-white mb-1">Solicitar consulta</h3>
+                    <h3 class="text-xl font-semibold text-white mb-1">Laboratorio</h3>
                     <p class="text-white/75 text-sm leading-relaxed">
-                        Reserva un nuevo turno seleccionando sede, servicio, fecha y hora.
+                        Agenda tu cita para exámenes de laboratorio: hemogramas, perfiles metabólicos, uroanálisis y más.
                     </p>
                 </div>
                 <div class="flex items-center gap-1 text-white/80 text-sm mt-auto">
-                    <span>Continuar</span>
+                    <span>Agendar cita</span>
                     <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
                 </div>
             </a>
 
-            <!-- Tarjeta 2: Ver mis consultas -->
-            <a href="{% url 'mis_consultas' %}" id="card-mis-consultas"
+            <!-- Tarjeta: Vacunación -->
+            <a href="{% url 'solicitar_consulta' %}?categoria=procedimientos" id="card-vacunacion"
+               class="group bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue dark:hover:border-light-blue transition-all duration-300 flex flex-col gap-4">
+                <div class="w-12 h-12 rounded-full bg-alert-bg dark:bg-dark-border flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-blue dark:text-light-blue">vaccines</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-1">Vacunación</h3>
+                    <p class="text-Light-Grey text-sm leading-relaxed">
+                        Programa tu cita de vacunación: esquema infantil, influenza, COVID-19 y otras vacunas disponibles.
+                    </p>
+                </div>
+                <div class="flex items-center gap-1 text-blue dark:text-light-blue text-sm mt-auto">
+                    <span>Agendar cita</span>
+                    <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+            </a>
+
+            <!-- Tarjeta: Ver mis procedimientos -->
+            <a href="{% url 'mis_consultas' %}" id="card-mis-procedimientos"
                class="group bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue dark:hover:border-light-blue transition-all duration-300 flex flex-col gap-4">
                 <div class="w-12 h-12 rounded-full bg-alert-bg dark:bg-dark-border flex items-center justify-center">
                     <span class="material-symbols-outlined text-3xl text-blue dark:text-light-blue">assignment</span>
                 </div>
                 <div>
-                    <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-1">Ver mis consultas</h3>
+                    <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-1">Ver mis citas</h3>
                     <p class="text-Light-Grey text-sm leading-relaxed">
-                        Consulta el listado de tus turnos activos y su estado actual.
+                        Consulta el listado de tus citas de procedimientos y su estado actual.
                     </p>
                 </div>
                 <div class="flex items-center gap-1 text-blue dark:text-light-blue text-sm mt-auto">
@@ -103,38 +121,20 @@
                 </div>
             </a>
 
-            <!-- Tarjeta 3: Cancelar consulta -->
-            <a href="{% url 'cancelar_consulta' %}" id="card-cancelar"
+            <!-- Tarjeta: Cancelar procedimiento -->
+            <a href="{% url 'cancelar_consulta' %}" id="card-cancelar-procedimiento"
                class="group bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-red-400 transition-all duration-300 flex flex-col gap-4">
                 <div class="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
                     <span class="material-symbols-outlined text-3xl text-red-500">event_busy</span>
                 </div>
                 <div>
-                    <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-1">Cancelar consulta</h3>
+                    <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-1">Cancelar cita</h3>
                     <p class="text-Light-Grey text-sm leading-relaxed">
-                        Cancela una consulta médica programada que ya no puedas asistir.
+                        Cancela una cita de procedimiento programada que ya no puedas asistir.
                     </p>
                 </div>
                 <div class="flex items-center gap-1 text-red-400 text-sm mt-auto">
                     <span>Gestionar</span>
-                    <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
-                </div>
-            </a>
-
-            <!-- Tarjeta 4: Reprogramar consulta -->
-            <a href="{% url 'reprogramar_consulta' %}" id="card-reprogramar"
-               class="group bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-yellow-400 transition-all duration-300 flex flex-col gap-4">
-                <div class="w-12 h-12 rounded-full bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-3xl text-yellow-500">update</span>
-                </div>
-                <div>
-                    <h3 class="text-xl font-semibold text-Dark-Grey dark:text-dark-text mb-1">Reprogramar consulta</h3>
-                    <p class="text-Light-Grey text-sm leading-relaxed">
-                        Cambia la fecha u hora de una consulta ya agendada.
-                    </p>
-                </div>
-                <div class="flex items-center gap-1 text-yellow-500 text-sm mt-auto">
-                    <span>Modificar</span>
                     <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
                 </div>
             </a>

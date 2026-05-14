@@ -26,38 +26,15 @@
 </head>
 <body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
 
-    <!-- Encabezado -->
-    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card transition-colors duration-300">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <h1 class="text-xl md:text-2xl font-bold text-blue dark:text-light-blue leading-tight">
-                Nombre EPS-Centro <br class="md:hidden"> médico
-            </h1>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text hover:bg-Light-Grey dark:hover:bg-Dark-Grey transition-colors shadow-sm flex items-center justify-center">
-                    <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
-                </button>
-                <a href="{% url 'home' %}" class="border border-blue dark:border-light-blue text-blue dark:text-light-blue px-4 py-2 rounded-full text-sm font-medium hover:bg-blue hover:text-white transition-colors">
-                    Ir al inicio
-                </a>
-                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm">
-                    Cerrar sesión
-                </a>
-            </div>
-        </div>
-    </header>
+    <!-- Encabezado (componente compartido) -->
+    {% include 'includes/header_panel.html' with header_icon='admin_panel_settings' header_title='Panel de Administración' %}
 
-    <main class="max-w-5xl mx-auto px-4 py-10">
+    <main class="max-w-7xl mx-auto px-4 py-8">
 
         <!-- Título de sección -->
-        <section class="mb-8">
-            <a href="{% url 'home' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue dark:hover:text-light-blue transition-colors mb-4">
-                <span class="material-symbols-outlined text-base">arrow_back</span>
-                Volver al inicio
-            </a>
-            <h2 class="text-2xl md:text-3xl font-bold text-Dark-Grey dark:text-dark-text">
-                Panel de Administración
-            </h2>
-            <p class="text-Light-Grey mt-2 text-sm md:text-base">
+        <section class="mb-6">
+            <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">Panel de Administración</h2>
+            <p class="text-Light-Grey text-sm mt-1">
                 Gestiona las sedes, servicios y sus vinculaciones desde este panel.
             </p>
         </section>
@@ -74,7 +51,7 @@
         {% endif %}
 
         <!-- Resumen rápido -->
-        <section class="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <section class="mb-8 grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div class="bg-alert-bg dark:bg-dark-border border border-light-blue dark:border-blue rounded-xl p-5 text-center transition-colors duration-300">
                 <p class="text-3xl font-bold text-blue dark:text-light-blue">{{ total_sedes }}</p>
                 <p class="text-xs text-Light-Grey mt-1 uppercase tracking-wide">Sedes</p>
@@ -87,10 +64,19 @@
                 <p class="text-3xl font-bold text-blue dark:text-light-blue">{{ total_vinculaciones }}</p>
                 <p class="text-xs text-Light-Grey mt-1 uppercase tracking-wide">Vinculaciones</p>
             </div>
+            <div class="bg-alert-bg dark:bg-dark-border border border-light-blue dark:border-blue rounded-xl p-5 text-center transition-colors duration-300">
+                <p class="text-3xl font-bold text-blue dark:text-light-blue">{{ total_sedes_farmacia }}</p>
+                <p class="text-xs text-Light-Grey mt-1 uppercase tracking-wide">Sedes Farmacia</p>
+            </div>
         </section>
 
-        <!-- Cuadrícula de acciones -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Cuadrícula de acciones — Sedes, Servicios, Vinculaciones -->
+        <section class="mb-6">
+            <h3 class="text-lg font-semibold text-Dark-Grey dark:text-dark-text mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-blue dark:text-light-blue">domain</span>
+                Gestión de Sedes & Servicios
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
             <!-- Crear sede -->
             <a href="{% url 'crear_sede' %}" id="card-crear-sede"
@@ -156,7 +142,7 @@
                 </div>
             </a>
 
-            <!-- Vincular sede-servicio -->
+            <!-- Vincular sede-servicio (blue primary card) -->
             <a href="{% url 'crear_sede_servicio' %}" id="card-crear-vinculacion"
                class="group bg-blue hover:bg-light-blue rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-4">
                 <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
@@ -187,7 +173,88 @@
                     <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
                 </div>
             </a>
-        </div>
+
+            </div>
+        </section>
+
+        <!-- Gestión de Farmacias -->
+        <section class="mb-6">
+            <h3 class="text-lg font-semibold text-Dark-Grey dark:text-dark-text mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-blue dark:text-light-blue">local_pharmacy</span>
+                Gestión de Farmacias
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- Crear sede farmacia -->
+            <a href="{% url 'crear_sede_farmacia' %}" id="card-crear-sede-farmacia"
+               class="group bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue dark:hover:border-light-blue transition-all duration-300 flex flex-col gap-4">
+                <div class="w-12 h-12 rounded-full bg-alert-bg dark:bg-dark-border flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-blue dark:text-light-blue">add_business</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-Dark-Grey dark:text-dark-text mb-1">Crear sede farmacia</h3>
+                    <p class="text-Light-Grey text-sm leading-relaxed">Registra una nueva sede de farmacia con ubicación y coordenadas.</p>
+                </div>
+                <div class="flex items-center gap-1 text-blue dark:text-light-blue text-sm mt-auto">
+                    <span>Ir al formulario</span>
+                    <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+            </a>
+
+            <!-- Ver sedes farmacia -->
+            <a href="{% url 'listar_sedes_farmacia' %}" id="card-listar-sedes-farmacia"
+               class="group bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue dark:hover:border-light-blue transition-all duration-300 flex flex-col gap-4">
+                <div class="w-12 h-12 rounded-full bg-alert-bg dark:bg-dark-border flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-blue dark:text-light-blue">inventory_2</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-Dark-Grey dark:text-dark-text mb-1">Ver sedes farmacia</h3>
+                    <p class="text-Light-Grey text-sm leading-relaxed">Consulta, edita o elimina las sedes de farmacia registradas.</p>
+                </div>
+                <div class="flex items-center gap-1 text-blue dark:text-light-blue text-sm mt-auto">
+                    <span>Ver listado</span>
+                    <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+            </a>
+
+            </div>
+        </section>
+
+        <!-- Gestión de PQRS -->
+        <section class="mb-6">
+            <h3 class="text-lg font-semibold text-Dark-Grey dark:text-dark-text mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-blue dark:text-light-blue">support_agent</span>
+                Atención al Cliente
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- Ver PQRS -->
+            <a href="{% url 'admin_pqrs' %}" id="card-admin-pqrs"
+               class="group bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue dark:hover:border-light-blue transition-all duration-300 flex flex-col gap-4">
+                <div class="flex items-start justify-between">
+                    <div class="w-12 h-12 rounded-full bg-alert-bg dark:bg-dark-border flex items-center justify-center">
+                        <span class="material-symbols-outlined text-3xl text-blue dark:text-light-blue">inbox</span>
+                    </div>
+                    {% if pqrs_pendientes > 0 %}
+                    <span class="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">{{ pqrs_pendientes }}</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-Dark-Grey dark:text-dark-text mb-1">Gestionar PQRS</h3>
+                    <p class="text-Light-Grey text-sm leading-relaxed">
+                        Revisar y actualizar el estado de las solicitudes ciudadanas.
+                        <br><span class="text-xs">{{ total_pqrs }} total · {{ pqrs_pendientes }} pendiente(s)</span>
+                    </p>
+                </div>
+                <div class="flex items-center gap-1 text-blue dark:text-light-blue text-sm mt-auto">
+                    <span>Ver solicitudes</span>
+                    <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+            </a>
+
+            </div>
+        </section>
+        
     </main>
 
     <script>

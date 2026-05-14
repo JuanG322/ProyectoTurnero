@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket — {{ turno.codigo_visual }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: {
+            'blue': '#0960ae', 'light-blue': '#007dbf', 'Dark-Grey': '#515151',
+            'Light-Grey': '#848484', 'soft-border': '#d1d5db', 'dark-bg': '#121212',
+            'dark-card': '#1e1e1e', 'dark-text': '#e5e7eb', 'dark-border': '#374151',
+            'alert-bg': '#eff6ff'
+        }}}}
+    </script>
+</head>
+<body class="bg-white dark:bg-dark-bg min-h-screen font-sans">
+    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-xl font-bold text-blue dark:text-light-blue">Nombre EPS-Centro médico</h1>
+            <div class="flex items-center gap-3">
+                <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text">
+                    <span class="material-symbols-outlined text-xl">dark_mode</span>
+                </button>
+                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Cerrar sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 py-10">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-4xl text-green-600 dark:text-green-400">check_circle</span>
+            </div>
+            <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">¡Turno asignado!</h2>
+            <p class="text-Light-Grey mt-1 text-sm">Conserva esta pantalla como tu ticket digital.</p>
+        </div>
+
+        <!-- Ticket card -->
+        <div class="bg-white dark:bg-dark-card border-2 border-blue dark:border-light-blue rounded-2xl shadow-lg overflow-hidden">
+            <!-- Header -->
+            <div class="bg-blue dark:bg-light-blue p-6 text-center">
+                <p class="text-white/70 text-xs uppercase tracking-widest">Tu número de turno</p>
+                <p class="text-5xl font-black text-white mt-2">{{ turno.codigo_visual }}</p>
+                <p class="text-white/70 text-xs mt-2">Farmacia</p>
+            </div>
+            <!-- Details -->
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between py-2 border-b border-soft-border dark:border-dark-border">
+                    <span class="text-sm text-Light-Grey">Sede</span>
+                    <span class="text-sm font-medium text-Dark-Grey dark:text-dark-text">{{ turno.sede_farmacia.nombre }}</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-soft-border dark:border-dark-border">
+                    <span class="text-sm text-Light-Grey">Fecha</span>
+                    <span class="text-sm font-medium text-Dark-Grey dark:text-dark-text">{{ turno.fecha_turno }}</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-soft-border dark:border-dark-border">
+                    <span class="text-sm text-Light-Grey">Estado</span>
+                    <span class="inline-flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium px-3 py-1 rounded-full">
+                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> {{ turno.estado|title }}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-soft-border dark:border-dark-border">
+                    <span class="text-sm text-Light-Grey">Tu posición en la cola</span>
+                    <span class="text-lg font-bold text-blue dark:text-light-blue">{{ posicion }} de {{ total_espera }}</span>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-sm text-Light-Grey">Tiempo estimado</span>
+                    <span class="text-sm font-bold text-Dark-Grey dark:text-dark-text">~{{ tiempo_estimado }} min</span>
+                </div>
+
+                {% if turno_actual %}
+                <div class="bg-alert-bg dark:bg-dark-border rounded-xl p-3 text-center mt-2">
+                    <p class="text-xs text-Light-Grey">Turno en atención ahora</p>
+                    <p class="text-lg font-bold text-blue dark:text-light-blue">{{ turno_actual.codigo_visual }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-6 text-center">
+            <a href="{% url 'farmacia_info' %}" class="inline-flex items-center gap-2 text-sm text-Light-Grey hover:text-blue transition-colors">
+                <span class="material-symbols-outlined text-base">arrow_back</span> Volver a Farmacia
+            </a>
+        </div>
+    </main>
+</body>
+</html>

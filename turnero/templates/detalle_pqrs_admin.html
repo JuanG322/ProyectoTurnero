@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle PQRS {{ pqrs.numero_radicado }} - Panel de Administración</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: {
+            'blue': '#0960ae', 'light-blue': '#007dbf', 'Dark-Grey': '#515151',
+            'Light-Grey': '#848484', 'soft-border': '#d1d5db', 'dark-bg': '#121212',
+            'dark-card': '#1e1e1e', 'dark-text': '#e5e7eb', 'dark-border': '#374151',
+            'alert-bg': '#eff6ff'
+        }}}}
+    </script>
+</head>
+<body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
+
+    {% include 'includes/header_panel.html' with header_icon='admin_panel_settings' header_title='Panel de Administración' %}
+
+    <main class="max-w-3xl mx-auto px-4 py-10">
+        <section class="mb-8">
+            <a href="{% url 'admin_pqrs' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue dark:hover:text-light-blue transition-colors mb-4">
+                <span class="material-symbols-outlined text-base">arrow_back</span> Volver al listado
+            </a>
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">{{ pqrs.numero_radicado }}</h2>
+                    <p class="text-Light-Grey text-sm mt-1">Detalle de la solicitud</p>
+                </div>
+                <!-- Estado actual -->
+                {% if pqrs.estado == 'radicado' %}
+                <span class="inline-flex items-center gap-1.5 bg-blue/10 text-blue text-sm font-medium px-4 py-2 rounded-full">
+                    <span class="w-2 h-2 rounded-full bg-blue inline-block"></span> Radicado
+                </span>
+                {% elif pqrs.estado == 'en_proceso' %}
+                <span class="inline-flex items-center gap-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-sm font-medium px-4 py-2 rounded-full">
+                    <span class="w-2 h-2 rounded-full bg-yellow-500 inline-block"></span> En proceso
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-medium px-4 py-2 rounded-full">
+                    <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span> Resuelto
+                </span>
+                {% endif %}
+            </div>
+        </section>
+
+        {% if messages %}
+        <div class="mb-6">
+            {% for msg in messages %}
+            <div class="{% if msg.tags == 'success' %}bg-green-100 border-green-400 text-green-700{% elif msg.tags == 'error' %}bg-red-100 border-red-400 text-red-700{% else %}bg-alert-bg border-light-blue text-Dark-Grey{% endif %} border px-4 py-3 rounded-xl text-sm text-center mb-2">
+                {{ msg }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Información del solicitante -->
+        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl shadow-sm overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-soft-border dark:border-dark-border bg-gray-50 dark:bg-dark-border">
+                <h3 class="text-sm font-semibold text-Dark-Grey dark:text-dark-text flex items-center gap-2">
+                    <span class="material-symbols-outlined text-blue dark:text-light-blue text-lg">person</span>
+                    Información del solicitante
+                </h3>
+            </div>
+            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-xs text-Light-Grey uppercase tracking-wide mb-1">Nombre completo</p>
+                    <p class="text-sm font-medium text-Dark-Grey dark:text-dark-text">{{ pqrs.usuario.nombre }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-Light-Grey uppercase tracking-wide mb-1">Número de documento</p>
+                    <p class="text-sm font-medium text-Dark-Grey dark:text-dark-text">{{ pqrs.usuario.num_documento }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-Light-Grey uppercase tracking-wide mb-1">Correo electrónico</p>
+                    <p class="text-sm font-medium text-Dark-Grey dark:text-dark-text">{{ pqrs.usuario.email }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-Light-Grey uppercase tracking-wide mb-1">Sede relacionada</p>
+                    <p class="text-sm font-medium text-Dark-Grey dark:text-dark-text">{% if pqrs.sede %}{{ pqrs.sede.nombre }}{% else %}No especificada{% endif %}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalle de la solicitud -->
+        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl shadow-sm overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-soft-border dark:border-dark-border bg-gray-50 dark:bg-dark-border">
+                <h3 class="text-sm font-semibold text-Dark-Grey dark:text-dark-text flex items-center gap-2">
+                    <span class="material-symbols-outlined text-blue dark:text-light-blue text-lg">description</span>
+                    Detalle de la solicitud
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                    <div>
+                        <p class="text-xs text-Light-Grey uppercase tracking-wide mb-1">Tipo</p>
+                        <p class="text-sm font-medium text-Dark-Grey dark:text-dark-text">
+                            {% if pqrs.tipo == 'peticion' %}📄 Petición
+                            {% elif pqrs.tipo == 'queja' %}⚠️ Queja
+                            {% elif pqrs.tipo == 'reclamo' %}⛔ Reclamo
+                            {% else %}💡 Sugerencia{% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-Light-Grey uppercase tracking-wide mb-1">Fecha de radicación</p>
+                        <p class="text-sm font-medium text-Dark-Grey dark:text-dark-text">{{ pqrs.fecha_creacion|date:"d/m/Y — H:i" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-Light-Grey uppercase tracking-wide mb-1">Radicado</p>
+                        <p class="text-sm font-mono font-semibold text-blue dark:text-light-blue">{{ pqrs.numero_radicado }}</p>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <p class="text-xs text-Light-Grey uppercase tracking-wide mb-1">Asunto</p>
+                    <p class="text-sm font-semibold text-Dark-Grey dark:text-dark-text">{{ pqrs.asunto }}</p>
+                </div>
+
+                <div>
+                    <p class="text-xs text-Light-Grey uppercase tracking-wide mb-2">Descripción completa</p>
+                    <div class="bg-gray-50 dark:bg-dark-border rounded-xl p-4 text-sm text-Dark-Grey dark:text-dark-text leading-relaxed whitespace-pre-wrap">{{ pqrs.descripcion }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actualizar estado -->
+        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-soft-border dark:border-dark-border bg-gray-50 dark:bg-dark-border">
+                <h3 class="text-sm font-semibold text-Dark-Grey dark:text-dark-text flex items-center gap-2">
+                    <span class="material-symbols-outlined text-blue dark:text-light-blue text-lg">sync</span>
+                    Actualizar estado
+                </h3>
+            </div>
+            <div class="p-6">
+                <form method="POST" class="flex items-end gap-4">
+                    {% csrf_token %}
+                    <div class="flex-1">
+                        <label class="text-xs text-Light-Grey uppercase tracking-wide mb-1 block">Nuevo estado</label>
+                        <select name="estado"
+                                class="w-full border border-soft-border dark:border-dark-border text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card transition-colors">
+                            <option value="radicado" {% if pqrs.estado == 'radicado' %}selected{% endif %}>Radicado</option>
+                            <option value="en_proceso" {% if pqrs.estado == 'en_proceso' %}selected{% endif %}>En proceso</option>
+                            <option value="resuelto" {% if pqrs.estado == 'resuelto' %}selected{% endif %}>Resuelto</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-blue hover:bg-light-blue text-white font-medium py-2.5 px-6 rounded-full transition-colors shadow-sm flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-lg">save</span> Guardar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function toggleTheme() {
+            const h = document.documentElement, i = document.getElementById('theme-icon');
+            h.classList.contains('dark') ? (h.classList.remove('dark'), i.innerText = 'dark_mode') : (h.classList.add('dark'), i.innerText = 'light_mode');
+        }
+    </script>
+</body>
+</html>

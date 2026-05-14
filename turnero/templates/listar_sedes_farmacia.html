@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sedes - Panel de Administración</title>
+    <title>Sedes de Farmacia - Panel de Administración</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <script>
@@ -16,60 +16,54 @@
     </script>
 </head>
 <body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
-    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <h1 class="text-xl font-bold text-blue dark:text-light-blue">Nombre EPS-Centro médico</h1>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text transition-colors flex items-center">
-                    <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
-                </button>
-                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Cerrar sesión</a>
-            </div>
-        </div>
-    </header>
-    <main class="max-w-4xl mx-auto px-4 py-10">
+
+    {% include 'includes/header_panel.html' with header_icon='admin_panel_settings' header_title='Panel de Administración' %}
+
+    <main class="max-w-6xl mx-auto px-4 py-10">
         <section class="mb-8">
-            <a href="{% url 'panel_admin' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue transition-colors mb-4">
+            <a href="{% url 'panel_admin' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue dark:hover:text-light-blue transition-colors mb-4">
                 <span class="material-symbols-outlined text-base">arrow_back</span> Volver al panel
             </a>
             <div class="flex items-center justify-between">
-                <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">Sedes registradas</h2>
-                <a href="{% url 'crear_sede' %}" class="bg-blue hover:bg-light-blue text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
-                    <span class="material-symbols-outlined text-base">add</span> Nueva sede
+                <div>
+                    <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">Sedes de farmacia</h2>
+                    <p class="text-Light-Grey mt-1 text-sm">{{ sedes|length }} sede(s) registrada(s)</p>
+                </div>
+                <a href="{% url 'crear_sede_farmacia' %}" class="bg-blue hover:bg-light-blue text-white font-medium py-2.5 px-6 rounded-full transition-colors shadow-sm flex items-center gap-2 text-sm">
+                    <span class="material-symbols-outlined text-lg">add</span> Nueva sede
                 </a>
             </div>
         </section>
+
         {% if messages %}
         <div class="mb-6">
-            {% for message in messages %}
-            <div class="{% if message.tags == 'success' %}bg-green-100 border-green-400 text-green-700{% else %}bg-red-100 border-red-400 text-red-700{% endif %} border px-4 py-3 rounded-xl text-sm text-center mb-2">{{ message }}</div>
+            {% for msg in messages %}
+            <div class="{% if msg.tags == 'success' %}bg-green-100 border-green-400 text-green-700{% elif msg.tags == 'error' %}bg-red-100 border-red-400 text-red-700{% else %}bg-alert-bg border-light-blue text-Dark-Grey{% endif %} border px-4 py-3 rounded-xl text-sm text-center mb-2">
+                {{ msg }}
+            </div>
             {% endfor %}
         </div>
         {% endif %}
-        {% if not sedes %}
-        <div class="text-center py-20">
-            <span class="material-symbols-outlined text-5xl text-Light-Grey mb-4">location_off</span>
-            <p class="text-Dark-Grey dark:text-dark-text font-medium">No hay sedes registradas</p>
-            <p class="text-Light-Grey text-sm mt-1">Crea la primera sede desde el botón de arriba.</p>
-        </div>
-        {% else %}
-        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl overflow-hidden shadow-sm">
+
+        {% if sedes %}
+        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl shadow-sm overflow-hidden">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-soft-border dark:border-dark-border bg-gray-50 dark:bg-dark-border">
-                        <th class="text-left px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Código</th>
                         <th class="text-left px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Nombre</th>
                         <th class="text-left px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Dirección</th>
+                        <th class="text-left px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Ciudad</th>
                         <th class="text-center px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Estado</th>
+                        <th class="text-center px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Pantalla</th>
                         <th class="text-center px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for sede in sedes %}
                     <tr class="border-b border-soft-border dark:border-dark-border last:border-b-0 hover:bg-gray-50 dark:hover:bg-dark-border/50 transition-colors">
-                        <td class="px-5 py-3 font-mono text-blue dark:text-light-blue font-medium">{{ sede.cod_sede }}</td>
-                        <td class="px-5 py-3 text-Dark-Grey dark:text-dark-text">{{ sede.nombre }}</td>
-                        <td class="px-5 py-3 text-Light-Grey">{{ sede.direccion|default:"—" }}</td>
+                        <td class="px-5 py-3 font-medium text-Dark-Grey dark:text-dark-text">{{ sede.nombre }}</td>
+                        <td class="px-5 py-3 text-Light-Grey">{{ sede.direccion }}</td>
+                        <td class="px-5 py-3 text-Light-Grey">{{ sede.ciudad }}</td>
                         <td class="px-5 py-3 text-center">
                             {% if sede.activo %}
                             <span class="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium px-3 py-1 rounded-full">
@@ -82,11 +76,16 @@
                             {% endif %}
                         </td>
                         <td class="px-5 py-3 text-center">
+                            <a href="{% url 'farmacia_pantalla' sede.id %}" target="_blank" title="Abrir pantalla de la sede" class="bg-blue/10 hover:bg-blue/20 text-blue dark:text-light-blue p-1.5 rounded-lg transition-colors inline-flex items-center gap-1 text-xs font-medium">
+                                <span class="material-symbols-outlined text-lg">tv</span> Abrir
+                            </a>
+                        </td>
+                        <td class="px-5 py-3 text-center">
                             <div class="flex items-center justify-center gap-1.5">
-                                <a href="{% url 'editar_sede' sede.cod_sede %}" title="Editar" class="bg-blue/10 hover:bg-blue/20 text-blue dark:text-light-blue p-1.5 rounded-lg transition-colors">
+                                <a href="{% url 'editar_sede_farmacia' sede.id %}" title="Editar" class="bg-blue/10 hover:bg-blue/20 text-blue dark:text-light-blue p-1.5 rounded-lg transition-colors">
                                     <span class="material-symbols-outlined text-lg">edit</span>
                                 </a>
-                                <form method="POST" action="{% url 'eliminar_sede' sede.cod_sede %}" class="inline"
+                                <form method="POST" action="{% url 'eliminar_sede_farmacia' sede.id %}" class="inline"
                                       onsubmit="return confirm('¿Estás seguro de que deseas eliminar la sede «{{ sede.nombre }}»? Esta acción no se puede deshacer.');">
                                     {% csrf_token %}
                                     <button type="submit" title="Eliminar" class="bg-red-100 hover:bg-red-200 text-red-600 p-1.5 rounded-lg transition-colors">
@@ -100,10 +99,23 @@
                 </tbody>
             </table>
         </div>
+        {% else %}
+        <div class="text-center py-16 bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl">
+            <span class="material-symbols-outlined text-6xl text-Light-Grey mb-4">local_pharmacy</span>
+            <h3 class="text-lg font-semibold text-Dark-Grey dark:text-dark-text mb-2">Sin sedes registradas</h3>
+            <p class="text-Light-Grey text-sm mb-6">Aún no se han registrado sedes de farmacia en el sistema.</p>
+            <a href="{% url 'crear_sede_farmacia' %}" class="bg-blue hover:bg-light-blue text-white font-medium py-2.5 px-6 rounded-full transition-colors shadow-sm inline-flex items-center gap-2 text-sm">
+                <span class="material-symbols-outlined text-lg">add</span> Crear primera sede
+            </a>
+        </div>
         {% endif %}
     </main>
+
     <script>
-        function toggleTheme() { const h=document.documentElement,i=document.getElementById('theme-icon'); h.classList.contains('dark')?(h.classList.remove('dark'),i.innerText='dark_mode'):(h.classList.add('dark'),i.innerText='light_mode'); }
+        function toggleTheme() {
+            const h = document.documentElement, i = document.getElementById('theme-icon');
+            h.classList.contains('dark') ? (h.classList.remove('dark'), i.innerText = 'dark_mode') : (h.classList.add('dark'), i.innerText = 'light_mode');
+        }
     </script>
 </body>
 </html>

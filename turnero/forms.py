@@ -8,7 +8,7 @@ from datetime import timedelta, datetime as dt
 from django import forms
 from django.utils import timezone
 
-from .models import Sede, SedeServicio, Servicio, Turno
+from .models import PQRS, Sede, SedeFarmacia, SedeServicio, Servicio, Turno
 
 
 def _generar_franjas_horarias():
@@ -39,10 +39,21 @@ class SolicitudConsultaForm(forms.Form):
     conflictos de doble reserva.
     """
 
-    def __init__(self, *args, usuario=None, **kwargs):
+    def __init__(self, *args, usuario=None, categoria=None, **kwargs):
         """Almacena el usuario para las validaciones de doble reserva."""
         super().__init__(*args, **kwargs)
         self.usuario = usuario
+        self.categoria = categoria
+
+        # Filtrar servicios según la categoría seleccionada
+        if categoria == 'medicina':
+            self.fields['servicio'].queryset = Servicio.objects.filter(
+                activo=True, categoria='MEDICINA'
+            ).order_by('nombre')
+        elif categoria == 'procedimientos':
+            self.fields['servicio'].queryset = Servicio.objects.filter(
+                activo=True, categoria__in=['LABORATORIO', 'VACUNACION']
+            ).order_by('nombre')
 
     # Selección de sede (solo sedes activas)
     sede = forms.ModelChoiceField(
@@ -201,12 +212,13 @@ class SedeForm(forms.ModelForm):
         }
 
     def clean_cod_sede(self):
-        """Valida que el código de sede no exista ya en la base de datos."""
         codigo = self.cleaned_data.get('cod_sede')
-        if codigo and Sede.objects.filter(cod_sede=codigo).exists():
+        qs = Sede.objects.filter(cod_sede=codigo)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if codigo and qs.exists():
             raise forms.ValidationError(
-                f'Ya existe una sede con el código "{codigo}". '
-                'Por favor ingrese un código diferente.'
+                f'Ya existe una sede con el código "{codigo}".'
             )
         return codigo
 
@@ -219,22 +231,25 @@ class ServicioForm(forms.ModelForm):
 
     class Meta:
         model = Servicio
-        fields = ['cod_servicio', 'nombre']
+        fields = ['cod_servicio', 'nombre', 'categoria']
         labels = {
             'cod_servicio': 'Código de servicio',
             'nombre': 'Nombre del servicio',
+            'categoria': 'Categoría',
         }
         help_texts = {
             'cod_servicio': 'Código único alfanumérico (máx. 10 caracteres).',
+            'categoria': 'Define en qué módulo aparecerá el servicio.',
         }
 
     def clean_cod_servicio(self):
-        """Valida que el código de servicio no exista ya en la base de datos."""
         codigo = self.cleaned_data.get('cod_servicio')
-        if codigo and Servicio.objects.filter(cod_servicio=codigo).exists():
+        qs = Servicio.objects.filter(cod_servicio=codigo)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if codigo and qs.exists():
             raise forms.ValidationError(
-                f'Ya existe un servicio con el código "{codigo}". '
-                'Por favor ingrese un código diferente.'
+                f'Ya existe un servicio con el código "{codigo}".'
             )
         return codigo
 
@@ -269,16 +284,98 @@ class SedeServicioForm(forms.ModelForm):
         }
 
     def clean(self):
-        """Valida que la combinación sede + servicio no esté registrada."""
         cleaned = super().clean()
         sede = cleaned.get('sede')
         servicio = cleaned.get('servicio')
-
         if sede and servicio:
-            if SedeServicio.objects.filter(sede=sede, servicio=servicio).exists():
+            qs = SedeServicio.objects.filter(sede=sede, servicio=servicio)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
                 raise forms.ValidationError(
-                    f'La sede "{sede}" ya tiene vinculado el servicio "{servicio}". '
-                    'No se puede duplicar esta combinación.'
+                    f'La sede "{sede}" ya tiene vinculado el servicio "{servicio}".'
                 )
         return cleaned
+
+
+class SedeFarmaciaForm(forms.ModelForm):
+    """Formulario para crear/editar sedes de farmacia."""
+
+    class Meta:
+        model = SedeFarmacia
+        fields = ['nombre', 'direccion', 'ciudad']
+        labels = {
+            'nombre': 'Nombre de la sede',
+            'direccion': 'Dirección',
+            'ciudad': 'Ciudad',
+        }
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'w-full border border-soft-border dark:border-dark-border '
+                         'text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 '
+                         'focus:outline-none focus:ring-2 focus:ring-blue '
+                         'bg-white dark:bg-dark-card transition-colors',
+                'placeholder': 'Ej. Farmacia Central Norte',
+            }),
+            'direccion': forms.TextInput(attrs={
+                'class': 'w-full border border-soft-border dark:border-dark-border '
+                         'text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 '
+                         'focus:outline-none focus:ring-2 focus:ring-blue '
+                         'bg-white dark:bg-dark-card transition-colors',
+                'placeholder': 'Ej. Calle 100 #15-20',
+            }),
+            'ciudad': forms.TextInput(attrs={
+                'class': 'w-full border border-soft-border dark:border-dark-border '
+                         'text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 '
+                         'focus:outline-none focus:ring-2 focus:ring-blue '
+                         'bg-white dark:bg-dark-card transition-colors',
+                'placeholder': 'Ej. Bogotá',
+            }),
+        }
+
+
+class PQRSForm(forms.ModelForm):
+    """Formulario para radicar una PQRS."""
+
+    INPUT_CSS = (
+        'w-full border border-soft-border dark:border-dark-border '
+        'text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 '
+        'focus:outline-none focus:ring-2 focus:ring-blue '
+        'bg-white dark:bg-dark-card transition-colors'
+    )
+    TEXTAREA_CSS = (
+        'w-full border border-soft-border dark:border-dark-border '
+        'text-Dark-Grey dark:text-dark-text rounded-2xl px-5 py-3 '
+        'focus:outline-none focus:ring-2 focus:ring-blue '
+        'bg-white dark:bg-dark-card transition-colors'
+    )
+
+    class Meta:
+        model = PQRS
+        fields = ['tipo', 'sede', 'asunto', 'descripcion']
+        labels = {
+            'tipo': 'Tipo de solicitud',
+            'sede': 'Sede relacionada (opcional)',
+            'asunto': 'Asunto',
+            'descripcion': 'Descripción detallada',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['tipo'].widget = forms.Select(
+            choices=PQRS.TIPO_CHOICES,
+            attrs={'class': self.INPUT_CSS},
+        )
+        self.fields['sede'].widget = forms.Select(
+            attrs={'class': self.INPUT_CSS},
+        )
+        self.fields['sede'].queryset = Sede.objects.filter(activo=True)
+        self.fields['sede'].empty_label = '-- Ninguna --'
+        self.fields['asunto'].widget = forms.TextInput(
+            attrs={'class': self.INPUT_CSS, 'placeholder': 'Resumen breve de su solicitud'},
+        )
+        self.fields['descripcion'].widget = forms.Textarea(
+            attrs={'class': self.TEXTAREA_CSS, 'rows': 5,
+                   'placeholder': 'Describa su solicitud en detalle...'},
+        )
 

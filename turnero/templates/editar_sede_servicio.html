@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Vinculación - Panel de Administración</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: {
+            'blue': '#0960ae', 'light-blue': '#007dbf', 'Dark-Grey': '#515151',
+            'Light-Grey': '#848484', 'soft-border': '#d1d5db', 'dark-bg': '#121212',
+            'dark-card': '#1e1e1e', 'dark-text': '#e5e7eb', 'dark-border': '#374151'
+        }}}}
+    </script>
+</head>
+<body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
+    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-xl font-bold text-blue dark:text-light-blue">Nombre EPS-Centro médico</h1>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text transition-colors flex items-center">
+                    <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
+                </button>
+                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Cerrar sesión</a>
+            </div>
+        </div>
+    </header>
+    <main class="max-w-2xl mx-auto px-4 py-10">
+        <section class="mb-8">
+            <a href="{% url 'listar_sede_servicios' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue transition-colors mb-4">
+                <span class="material-symbols-outlined text-base">arrow_back</span> Volver a vinculaciones
+            </a>
+            <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">Editar vinculación</h2>
+            <p class="text-Light-Grey mt-2 text-sm">Modifica la vinculación <strong>{{ vinculacion.sede }} — {{ vinculacion.servicio }}</strong>.</p>
+        </section>
+        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl shadow-sm p-8">
+            <form method="POST" class="flex flex-col gap-6" novalidate>
+                {% csrf_token %}
+                <div class="flex flex-col gap-1">
+                    <label for="id_sede" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Sede</label>
+                    <select id="id_sede" name="sede"
+                        class="w-full border {% if formulario.sede.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card appearance-none transition-colors">
+                        <option value="">Seleccione una sede...</option>
+                        {% for choice in formulario.sede.field.queryset %}
+                        <option value="{{ choice.pk }}" {% if formulario.sede.value|stringformat:"s" == choice.pk|stringformat:"s" %}selected{% endif %}>{{ choice }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in formulario.sede.errors %}<p class="mt-1 ml-3 text-xs text-red-500">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="id_servicio" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Servicio</label>
+                    <select id="id_servicio" name="servicio"
+                        class="w-full border {% if formulario.servicio.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card appearance-none transition-colors">
+                        <option value="">Seleccione un servicio...</option>
+                        {% for choice in formulario.servicio.field.queryset %}
+                        <option value="{{ choice.pk }}" {% if formulario.servicio.value|stringformat:"s" == choice.pk|stringformat:"s" %}selected{% endif %}>{{ choice }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in formulario.servicio.errors %}<p class="mt-1 ml-3 text-xs text-red-500">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="id_prefijo" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Prefijo del turno</label>
+                    <input type="text" id="id_prefijo" name="prefijo" required maxlength="5" value="{{ formulario.prefijo.value|default:'' }}"
+                        class="w-full border {% if formulario.prefijo.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card transition-colors">
+                    <p class="ml-3 text-xs text-Light-Grey">Prefijo para el código visual (ej. LAB, PAG). Máx. 5 caracteres.</p>
+                    {% for error in formulario.prefijo.errors %}<p class="mt-1 ml-3 text-xs text-red-500">{{ error }}</p>{% endfor %}
+                </div>
+                {% if formulario.non_field_errors %}
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl text-sm">
+                    {% for error in formulario.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                </div>
+                {% endif %}
+                <div class="flex items-center justify-between mt-2 pt-4 border-t border-soft-border dark:border-dark-border">
+                    <a href="{% url 'listar_sede_servicios' %}" class="text-sm text-Light-Grey hover:text-blue transition-colors">Cancelar</a>
+                    <button type="submit" class="bg-blue hover:bg-light-blue text-white font-medium py-2.5 px-8 rounded-full transition-colors shadow-sm flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">save</span> Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+    <script>
+        function toggleTheme() { const h=document.documentElement,i=document.getElementById('theme-icon'); h.classList.contains('dark')?(h.classList.remove('dark'),i.innerText='dark_mode'):(h.classList.add('dark'),i.innerText='light_mode'); }
+    </script>
+</body>
+</html>

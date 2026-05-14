@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Servicio - Panel de Administración</title>
+    <title>Editar Servicio - Panel de Administración</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <script>
@@ -19,26 +19,25 @@
     {% include 'includes/header_panel.html' with header_icon='admin_panel_settings' header_title='Panel de Administración' %}
     <main class="max-w-2xl mx-auto px-4 py-10">
         <section class="mb-8">
-            <a href="{% url 'panel_admin' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue transition-colors mb-4">
-                <span class="material-symbols-outlined text-base">arrow_back</span> Volver al panel
+            <a href="{% url 'listar_servicios' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue transition-colors mb-4">
+                <span class="material-symbols-outlined text-base">arrow_back</span> Volver a servicios
             </a>
-            <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">Crear nuevo servicio</h2>
-            <p class="text-Light-Grey mt-2 text-sm">Registra un nuevo servicio médico en el sistema.</p>
+            <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">Editar servicio</h2>
+            <p class="text-Light-Grey mt-2 text-sm">Modifica los datos del servicio <strong>{{ servicio.nombre }}</strong>.</p>
         </section>
         <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl shadow-sm p-8">
-            <form method="POST" id="form-crear-servicio" class="flex flex-col gap-6" novalidate>
+            <form method="POST" class="flex flex-col gap-6" novalidate>
                 {% csrf_token %}
                 <div class="flex flex-col gap-1">
                     <label for="id_cod_servicio" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Código de servicio</label>
-                    <input type="text" id="id_cod_servicio" name="cod_servicio" required maxlength="10" value="{{ formulario.cod_servicio.value|default:'' }}" placeholder="Ej: LAB"
-                        class="w-full border {% if formulario.cod_servicio.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors">
-                    <p class="ml-3 text-xs text-Light-Grey">Código único alfanumérico (máx. 10 caracteres).</p>
+                    <input type="text" id="id_cod_servicio" name="cod_servicio" required maxlength="10" value="{{ formulario.cod_servicio.value|default:'' }}"
+                        class="w-full border {% if formulario.cod_servicio.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card transition-colors">
                     {% for error in formulario.cod_servicio.errors %}<p class="mt-1 ml-3 text-xs text-red-500">{{ error }}</p>{% endfor %}
                 </div>
                 <div class="flex flex-col gap-1">
-                    <label for="id_nombre" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Nombre del servicio</label>
-                    <input type="text" id="id_nombre" name="nombre" required maxlength="100" value="{{ formulario.nombre.value|default:'' }}" placeholder="Ej: Laboratorio Clínico"
-                        class="w-full border {% if formulario.nombre.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card placeholder-Light-Grey transition-colors">
+                    <label for="id_nombre" class="text-sm text-Dark-Grey dark:text-dark-text ml-3 font-medium">Nombre</label>
+                    <input type="text" id="id_nombre" name="nombre" required maxlength="100" value="{{ formulario.nombre.value|default:'' }}"
+                        class="w-full border {% if formulario.nombre.errors %}border-red-400{% else %}border-soft-border dark:border-dark-border{% endif %} text-Dark-Grey dark:text-dark-text rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue bg-white dark:bg-dark-card transition-colors">
                     {% for error in formulario.nombre.errors %}<p class="mt-1 ml-3 text-xs text-red-500">{{ error }}</p>{% endfor %}
                 </div>
                 <div class="flex flex-col gap-1">
@@ -63,9 +62,9 @@
                 </div>
                 {% endif %}
                 <div class="flex items-center justify-between mt-2 pt-4 border-t border-soft-border dark:border-dark-border">
-                    <a href="{% url 'panel_admin' %}" class="text-sm text-Light-Grey hover:text-blue transition-colors">Cancelar</a>
-                    <button type="submit" id="btn-crear-servicio" class="bg-blue hover:bg-light-blue text-white font-medium py-2.5 px-8 rounded-full transition-colors shadow-sm flex items-center gap-2">
-                        <span class="material-symbols-outlined text-lg">medical_services</span> Crear servicio
+                    <a href="{% url 'listar_servicios' %}" class="text-sm text-Light-Grey hover:text-blue transition-colors">Cancelar</a>
+                    <button type="submit" class="bg-blue hover:bg-light-blue text-white font-medium py-2.5 px-8 rounded-full transition-colors shadow-sm flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">save</span> Guardar cambios
                     </button>
                 </div>
             </form>

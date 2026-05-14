@@ -60,6 +60,7 @@
                         <th class="text-left px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Sede</th>
                         <th class="text-left px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Servicio</th>
                         <th class="text-center px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Prefijo</th>
+                        <th class="text-center px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,6 +73,20 @@
                         <td class="px-5 py-3 text-Dark-Grey dark:text-dark-text">{{ v.servicio.nombre }}</td>
                         <td class="px-5 py-3 text-center">
                             <span class="inline-block bg-alert-bg dark:bg-dark-border text-blue dark:text-light-blue font-mono font-bold text-sm px-3 py-1 rounded-full">{{ v.prefijo }}</span>
+                        </td>
+                        <td class="px-5 py-3 text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <a href="{% url 'editar_sede_servicio' v.pk %}" title="Editar" class="bg-blue/10 hover:bg-blue/20 text-blue dark:text-light-blue p-1.5 rounded-lg transition-colors">
+                                    <span class="material-symbols-outlined text-lg">edit</span>
+                                </a>
+                                <form method="POST" action="{% url 'eliminar_sede_servicio' v.pk %}" class="inline"
+                                      onsubmit="return confirm('¿Estás seguro de que deseas eliminar la vinculación «{{ v.sede.nombre }} — {{ v.servicio.nombre }}»?');">
+                                    {% csrf_token %}
+                                    <button type="submit" title="Eliminar" class="bg-red-100 hover:bg-red-200 text-red-600 p-1.5 rounded-lg transition-colors">
+                                        <span class="material-symbols-outlined text-lg">delete</span>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

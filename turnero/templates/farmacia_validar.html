@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validación de QR — Farmacia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: {
+            'blue': '#0960ae', 'light-blue': '#007dbf', 'Dark-Grey': '#515151',
+            'Light-Grey': '#848484', 'soft-border': '#d1d5db', 'dark-bg': '#121212',
+            'dark-card': '#1e1e1e', 'dark-text': '#e5e7eb', 'dark-border': '#374151',
+            'alert-bg': '#eff6ff'
+        }}}}
+    </script>
+</head>
+<body class="bg-white dark:bg-dark-bg min-h-screen font-sans">
+    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-xl font-bold text-blue dark:text-light-blue">Nombre EPS-Centro médico</h1>
+            <div class="flex items-center gap-3">
+                <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text">
+                    <span class="material-symbols-outlined text-xl">dark_mode</span>
+                </button>
+                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Cerrar sesión</a>
+            </div>
+        </div>
+    </header>
+    <main class="max-w-lg mx-auto px-4 py-10">
+        {% if valido %}
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-4xl text-green-600 dark:text-green-400">verified</span>
+            </div>
+            <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">¡Código verificado!</h2>
+            <p class="text-Light-Grey mt-2 text-sm">Estás en <strong>{{ sede.nombre }}</strong>. Puedes solicitar tu turno.</p>
+        </div>
+        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl shadow-sm p-8">
+            <div class="mb-6 p-4 bg-alert-bg dark:bg-dark-border rounded-xl flex items-center gap-3">
+                <span class="material-symbols-outlined text-blue dark:text-light-blue text-2xl">local_pharmacy</span>
+                <div>
+                    <p class="text-sm font-semibold text-Dark-Grey dark:text-dark-text">{{ sede.nombre }}</p>
+                    <p class="text-xs text-Light-Grey">{{ sede.direccion }}, {{ sede.ciudad }}</p>
+                </div>
+            </div>
+            <form method="POST" class="flex flex-col gap-4">
+                {% csrf_token %}
+                <p class="text-sm text-Light-Grey text-center">Se le asignará un turno con prefijo <strong class="text-blue font-mono">FAR-</strong></p>
+                <button type="submit" class="w-full bg-blue hover:bg-light-blue text-white font-semibold py-3 px-6 rounded-full transition-colors shadow-sm flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-lg">confirmation_number</span> Solicitar turno de farmacia
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-4xl text-red-500">error</span>
+            </div>
+            <h2 class="text-2xl font-bold text-Dark-Grey dark:text-dark-text">Código no válido</h2>
+            <p class="text-Light-Grey mt-2 text-sm max-w-sm mx-auto">{{ error }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-card border border-soft-border dark:border-dark-border rounded-2xl shadow-sm p-8 text-center">
+            <span class="material-symbols-outlined text-5xl text-Light-Grey mb-4">qr_code_scanner</span>
+            <p class="text-sm text-Light-Grey mb-6">Acérquese a la pantalla de la sede y escanee el código QR actual.</p>
+            <a href="{% url 'farmacia_info' %}" class="inline-flex items-center gap-2 bg-blue hover:bg-light-blue text-white font-medium py-2.5 px-6 rounded-full transition-colors">
+                <span class="material-symbols-outlined text-lg">arrow_back</span> Volver a Farmacia
+            </a>
+        </div>
+        {% endif %}
+    </main>
+</body>
+</html>

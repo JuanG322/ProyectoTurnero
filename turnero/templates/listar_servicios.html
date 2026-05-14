@@ -16,17 +16,8 @@
     </script>
 </head>
 <body class="bg-white dark:bg-dark-bg min-h-screen font-sans transition-colors duration-300">
-    <header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <h1 class="text-xl font-bold text-blue dark:text-light-blue">Nombre EPS-Centro médico</h1>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text transition-colors flex items-center">
-                    <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
-                </button>
-                <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Cerrar sesión</a>
-            </div>
-        </div>
-    </header>
+
+    {% include 'includes/header_panel.html' with header_icon='admin_panel_settings' header_title='Panel de Administración' %}
     <main class="max-w-4xl mx-auto px-4 py-10">
         <section class="mb-8">
             <a href="{% url 'panel_admin' %}" class="inline-flex items-center gap-1 text-sm text-Light-Grey hover:text-blue transition-colors mb-4">
@@ -59,7 +50,9 @@
                     <tr class="border-b border-soft-border dark:border-dark-border bg-gray-50 dark:bg-dark-border">
                         <th class="text-left px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Código</th>
                         <th class="text-left px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Nombre</th>
+                        <th class="text-center px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Categoría</th>
                         <th class="text-center px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Estado</th>
+                        <th class="text-center px-5 py-3 text-xs uppercase tracking-wide text-Light-Grey font-medium">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -67,6 +60,25 @@
                     <tr class="border-b border-soft-border dark:border-dark-border last:border-b-0 hover:bg-gray-50 dark:hover:bg-dark-border/50 transition-colors">
                         <td class="px-5 py-3 font-mono text-blue dark:text-light-blue font-medium">{{ servicio.cod_servicio }}</td>
                         <td class="px-5 py-3 text-Dark-Grey dark:text-dark-text">{{ servicio.nombre }}</td>
+                        <td class="px-5 py-3 text-center">
+                            {% if servicio.categoria == 'MEDICINA' %}
+                            <span class="inline-flex items-center gap-1 bg-blue/10 text-blue dark:text-light-blue text-xs font-medium px-3 py-1 rounded-full">
+                                <span class="material-symbols-outlined text-sm">stethoscope</span> Medicina
+                            </span>
+                            {% elif servicio.categoria == 'LABORATORIO' %}
+                            <span class="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-medium px-3 py-1 rounded-full">
+                                <span class="material-symbols-outlined text-sm">biotech</span> Laboratorio
+                            </span>
+                            {% elif servicio.categoria == 'VACUNACION' %}
+                            <span class="inline-flex items-center gap-1 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 text-xs font-medium px-3 py-1 rounded-full">
+                                <span class="material-symbols-outlined text-sm">vaccines</span> Vacunación
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 bg-gray-100 dark:bg-dark-border text-Light-Grey text-xs font-medium px-3 py-1 rounded-full">
+                                {{ servicio.get_categoria_display }}
+                            </span>
+                            {% endif %}
+                        </td>
                         <td class="px-5 py-3 text-center">
                             {% if servicio.activo %}
                             <span class="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium px-3 py-1 rounded-full">
@@ -77,6 +89,20 @@
                                 <span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span> Inactivo
                             </span>
                             {% endif %}
+                        </td>
+                        <td class="px-5 py-3 text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <a href="{% url 'editar_servicio' servicio.cod_servicio %}" title="Editar" class="bg-blue/10 hover:bg-blue/20 text-blue dark:text-light-blue p-1.5 rounded-lg transition-colors">
+                                    <span class="material-symbols-outlined text-lg">edit</span>
+                                </a>
+                                <form method="POST" action="{% url 'eliminar_servicio' servicio.cod_servicio %}" class="inline"
+                                      onsubmit="return confirm('¿Estás seguro de que deseas eliminar el servicio «{{ servicio.nombre }}»?');">
+                                    {% csrf_token %}
+                                    <button type="submit" title="Eliminar" class="bg-red-100 hover:bg-red-200 text-red-600 p-1.5 rounded-lg transition-colors">
+                                        <span class="material-symbols-outlined text-lg">delete</span>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

@@ -77,8 +77,18 @@ class Sede(models.Model):
 
 
 class Servicio(models.Model):
+    CATEGORIA_CHOICES = [
+        ('MEDICINA', 'Medicina'),
+        ('LABORATORIO', 'Laboratorio'),
+        ('VACUNACION', 'Vacunación'),
+    ]
+
     cod_servicio = models.CharField(max_length=10, primary_key=True)
     nombre = models.CharField(max_length=100)
+    categoria = models.CharField(
+        max_length=15, choices=CATEGORIA_CHOICES, default='MEDICINA',
+        help_text='Categoría a la que pertenece el servicio.',
+    )
     activo = models.BooleanField(default=True)
 
     class Meta:
@@ -130,7 +140,39 @@ class Configuracion(models.Model):
         db_table = 'CONFIGURACIONES'
 
 
-# 4. TABLAS DE MOVIMIENTO (Transaccionales)
+# 3. MODELOS DE FARMACIA -----------------------------------------------
+
+class SedeFarmacia(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nombre = models.CharField(max_length=100)
+    direccion = models.CharField(max_length=200)
+    ciudad = models.CharField(max_length=100)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'SEDES_FARMACIA'
+
+    def __str__(self):
+        return f"{self.nombre} — {self.ciudad}"
+
+
+class TokenQRFarmacia(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sede_farmacia = models.ForeignKey(
+        SedeFarmacia, on_delete=models.CASCADE, related_name='tokens_qr'
+    )
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'TOKENS_QR_FARMACIA'
+
+    def __str__(self):
+        return f"Token {self.token} — {self.sede_farmacia.nombre}"
+
+
+# 4. TABLAS DE MOVIMIENTO (Transaccionales) ----------------------------
 
 class TokenRecuperacion(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -149,10 +191,25 @@ class TokenRecuperacion(models.Model):
         db_table = 'TOKENS_RECUPERACION'
         unique_together = ('usuario', 'token_hash')
 
-
 class Turno(models.Model):
+    TIPO_SERVICIO_CHOICES = [
+        ('MEDICINA', 'Medicina'),
+        ('LABORATORIO', 'Laboratorio'),
+        ('VACUNACION', 'Vacunación'),
+        ('FARMACIA', 'Farmacia'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sede_servicio = models.ForeignKey(SedeServicio, on_delete=models.PROTECT)
+    tipo_servicio = models.CharField(
+        max_length=20, choices=TIPO_SERVICIO_CHOICES, default='MEDICINA'
+    )
+    sede_servicio = models.ForeignKey(
+        SedeServicio, on_delete=models.PROTECT, null=True, blank=True
+    )
+    sede_farmacia = models.ForeignKey(
+        SedeFarmacia, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='turnos'
+    )
     fecha_turno = models.DateField()
     hora_cita = models.TimeField(
         null=True, blank=True,
@@ -192,7 +249,6 @@ class Turno(models.Model):
 
     class Meta:
         db_table = 'TURNOS'
-        unique_together = ('sede_servicio', 'fecha_turno', 'consecutivo_diario')
 
 
 class QrToken(models.Model):
@@ -229,4 +285,56 @@ class HistorialEvento(models.Model):
     class Roles:
         PACIENTE = 'Paciente'
         OPERADOR = 'Operador'
-        ADMIN = 'Administrador'    
+        ADMIN = 'Administrador'
+
+
+# 6. ATENCIÓN AL CLIENTE — PQRS -----------------------------------------------
+
+class PQRS(models.Model):
+    TIPO_CHOICES = [
+        ('peticion', 'Petición'),
+        ('queja', 'Queja'),
+        ('reclamo', 'Reclamo'),
+        ('sugerencia', 'Sugerencia'),
+    ]
+    ESTADO_CHOICES = [
+        ('radicado', 'Radicado'),
+        ('en_proceso', 'En proceso'),
+        ('resuelto', 'Resuelto'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='pqrs',
+        db_column='num_documento_usuario',
+        to_field='num_documento',
+    )
+    tipo = models.CharField(max_length=15, choices=TIPO_CHOICES)
+    sede = models.ForeignKey(
+        Sede, on_delete=models.SET_NULL, null=True, blank=True,
+        help_text='Sede donde ocurrió el evento (opcional).',
+    )
+    asunto = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    numero_radicado = models.CharField(max_length=20, unique=True, editable=False)
+    estado = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='radicado')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'PQRS'
+        ordering = ['-fecha_creacion']
+
+    def save(self, *args, **kwargs):
+        if not self.numero_radicado:
+            from django.utils import timezone
+            year = timezone.localdate().year
+            count = PQRS.objects.filter(
+                fecha_creacion__year=year
+            ).count() + 1
+            self.numero_radicado = f'PQRS-{year}-{count:04d}'
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.numero_radicado} — {self.get_tipo_display()}'

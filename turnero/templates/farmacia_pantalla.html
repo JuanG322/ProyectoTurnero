@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantalla Farmacia — {{ sede.nombre }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'blue': '#0960ae', 'light-blue': '#007dbf',
+                        'Dark-Grey': '#515151', 'Light-Grey': '#848484',
+                        'dark-bg': '#0a0a0a', 'dark-card': '#1a1a2e',
+                        'dark-text': '#e5e7eb', 'dark-border': '#2d2d44',
+                    },
+                    fontFamily: { 'inter': ['Inter', 'sans-serif'] },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(9, 96, 174, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(9, 96, 174, 0.6); }
+        }
+        .qr-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        @keyframes slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide { animation: slide-up 0.5s ease-out; }
+    </style>
+</head>
+<body class="bg-dark-bg min-h-screen flex flex-col">
+
+    <!-- Header bar -->
+    <header class="bg-dark-card border-b border-dark-border px-8 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-3xl text-blue">local_pharmacy</span>
+            <div>
+                <h1 class="text-xl font-bold text-white">{{ sede.nombre }}</h1>
+                <p class="text-xs text-Light-Grey">{{ sede.direccion }}, {{ sede.ciudad }}</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-6 text-sm">
+            <div class="text-center">
+                <p class="text-3xl font-black text-blue" id="count-espera">{{ en_espera }}</p>
+                <p class="text-Light-Grey text-xs">En espera</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl font-black text-green-400" id="count-atendidos">{{ atendidos }}</p>
+                <p class="text-Light-Grey text-xs">Atendidos</p>
+            </div>
+            <div class="text-center px-4 py-2 bg-dark-border rounded-xl">
+                <p class="text-xs text-Light-Grey">Hora actual</p>
+                <p class="text-lg font-bold text-white" id="reloj">--:--:--</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="flex-1 flex items-stretch gap-0">
+
+        <!-- Left: QR Code -->
+        <section class="w-1/2 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-dark-bg to-dark-card">
+            <div class="text-center">
+                <p class="text-Light-Grey text-sm uppercase tracking-widest mb-3">Escanee para obtener su turno</p>
+                <div class="bg-white rounded-3xl p-6 qr-glow inline-block">
+                    <img id="qr-image" src="" alt="Código QR" class="w-64 h-64 transition-opacity duration-500">
+                </div>
+                <div class="mt-6">
+                    <div class="flex items-center justify-center gap-2 text-Light-Grey text-sm">
+                        <span class="material-symbols-outlined text-base animate-spin" style="animation-duration:3s">refresh</span>
+                        <span>El código se actualiza cada <strong class="text-white">60 segundos</strong></span>
+                    </div>
+                    <div class="mt-2 text-xs text-dark-border">
+                        Token: <span id="token-id" class="font-mono">cargando...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right: Live Queue -->
+        <section class="w-1/2 bg-dark-card border-l border-dark-border flex flex-col">
+            <div class="p-6 border-b border-dark-border">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-blue">queue</span>
+                    Cola en vivo
+                </h2>
+            </div>
+
+            <!-- Turno actual -->
+            <div class="p-6 border-b border-dark-border">
+                <p class="text-xs text-Light-Grey uppercase tracking-widest mb-2">Atendiendo ahora</p>
+                {% if turno_actual %}
+                <div class="bg-blue/20 border border-blue/30 rounded-xl p-4 flex items-center gap-4 animate-slide">
+                    <div class="w-14 h-14 rounded-xl bg-blue flex items-center justify-center">
+                        <span class="text-white text-lg font-black">{{ turno_actual.codigo_visual }}</span>
+                    </div>
+                    <div>
+                        <p class="text-white font-semibold">Turno {{ turno_actual.codigo_visual }}</p>
+                        <p class="text-Light-Grey text-xs">
+                            {% if turno_actual.estado == 'llamando' %}
+                            <span class="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse mr-1"></span> Llamando...
+                            {% else %}
+                            <span class="inline-block w-2 h-2 rounded-full bg-green-400 mr-1"></span> En atención
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="bg-dark-border/50 rounded-xl p-4 text-center text-Light-Grey text-sm">
+                    Sin turno en atención
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Lista de turnos en espera -->
+            <div class="flex-1 overflow-y-auto p-6" id="lista-espera">
+                <p class="text-xs text-Light-Grey uppercase tracking-widest mb-3">Próximos turnos</p>
+                {% for turno in turnos_hoy %}
+                {% if turno.estado == 'en_espera' %}
+                <div class="flex items-center gap-3 py-2.5 border-b border-dark-border/50 last:border-0">
+                    <div class="w-10 h-10 rounded-lg bg-dark-border flex items-center justify-center">
+                        <span class="text-white text-xs font-bold">{{ turno.codigo_visual }}</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm text-white font-medium">Turno {{ turno.codigo_visual }}</p>
+                    </div>
+                    <span class="inline-flex items-center gap-1 bg-yellow-900/30 text-yellow-400 text-xs font-medium px-2.5 py-1 rounded-full">
+                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> Esperando
+                    </span>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Reloj en vivo
+        function actualizarReloj() {
+            const ahora = new Date();
+            document.getElementById('reloj').textContent = ahora.toLocaleTimeString('es-CO');
+        }
+        setInterval(actualizarReloj, 1000);
+        actualizarReloj();
+
+        // Rotación de QR cada 60 segundos
+        const sedeId = "{{ sede.id }}";
+        const qrImg = document.getElementById('qr-image');
+        const tokenDisplay = document.getElementById('token-id');
+
+        async function refreshQR() {
+            try {
+                const resp = await fetch(`/farmacia/api/qr/${sedeId}/`);
+                const data = await resp.json();
+                qrImg.style.opacity = '0';
+                setTimeout(() => {
+                    qrImg.src = data.url_qr_img;
+                    qrImg.style.opacity = '1';
+                }, 300);
+                tokenDisplay.textContent = data.token.substring(0, 8) + '...';
+            } catch (e) {
+                console.error('Error al refrescar QR:', e);
+            }
+        }
+
+        // Primer QR al cargar + intervalo
+        refreshQR();
+        setInterval(refreshQR, 60000);
+
+        // Auto-reload page every 30s to refresh the queue
+        setInterval(() => { location.reload(); }, 30000);
+    </script>
+</body>
+</html>

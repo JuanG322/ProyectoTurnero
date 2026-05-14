@@ -1,0 +1,22 @@
+<!-- Shared header include — used by panel_admin.html, panel_operador.html, etc.
+     Required context variables:
+       - header_icon: Material Symbol name (e.g. 'admin_panel_settings')
+       - header_title: Panel title text (e.g. 'Panel de Administración')
+-->
+<header class="w-full border-b border-soft-border dark:border-dark-border bg-white dark:bg-dark-card">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-2xl text-blue dark:text-light-blue">{{ header_icon }}</span>
+            <h1 class="text-xl font-bold text-blue dark:text-light-blue">{{ header_title }}</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="toggleTheme()" class="p-2 rounded-full bg-soft-border dark:bg-dark-border text-Dark-Grey dark:text-dark-text transition-colors flex items-center">
+                <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
+            </button>
+            <a href="{% url 'home' %}" class="border border-blue dark:border-light-blue text-blue dark:text-light-blue px-4 py-2 rounded-full text-sm font-medium hover:bg-blue hover:text-white dark:hover:bg-light-blue transition-colors flex items-center gap-1">
+                <span class="material-symbols-outlined text-base">home</span> Inicio
+            </a>
+            <a href="{% url 'salir' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">Cerrar sesión</a>
+        </div>
+    </div>
+</header>

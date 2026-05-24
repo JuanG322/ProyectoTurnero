@@ -61,4 +61,7 @@ urlpatterns = [
     path('admin-panel/pqrs/', views.admin_pqrs, name='admin_pqrs'),
     path('admin-panel/pqrs/<uuid:pk>/actualizar/', views.admin_actualizar_pqrs, name='admin_actualizar_pqrs'),
     path('admin-panel/pqrs/<uuid:pk>/', views.detalle_pqrs_admin, name='detalle_pqrs_admin'),
+
+    # Panel de Estadísticas y Reportes
+    path('admin-panel/estadisticas/', views.panel_estadisticas, name='panel_estadisticas'),
 ]

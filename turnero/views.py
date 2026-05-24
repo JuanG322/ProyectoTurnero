@@ -14,7 +14,7 @@ from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
-from django.db.models import Max
+from django.db.models import Count, Max, Q
 from django.views.decorators.http import require_GET, require_POST
 
 from .decorators import admin_requerido, operador_requerido
@@ -1276,3 +1276,122 @@ def detalle_pqrs_admin(request, pk):
             messages.error(request, 'Estado no válido.')
         return redirect('detalle_pqrs_admin', pk=pk)
     return render(request, 'detalle_pqrs_admin.html', {'pqrs': pqrs})
+
+
+# =============================================================================
+# Panel de Estadísticas y Reportes
+# =============================================================================
+
+@admin_requerido
+def panel_estadisticas(request):
+    """Dashboard de estadísticas con filtros de sede y rango temporal."""
+    hoy = timezone.localdate()
+
+    # ── Filtros ──────────────────────────────────────────────────────────────
+    sede_filtro = request.GET.get('sede', '')
+    rango_filtro = request.GET.get('rango', 'mes')
+
+    # Calcular rango de fechas
+    if rango_filtro == 'hoy':
+        fecha_desde = hoy
+    elif rango_filtro == '7dias':
+        fecha_desde = hoy - timedelta(days=7)
+    elif rango_filtro == 'anio':
+        fecha_desde = hoy - timedelta(days=365)
+    else:  # mes (default)
+        fecha_desde = hoy.replace(day=1)
+
+    # ── Queryset base de turnos ──────────────────────────────────────────────
+    turnos_qs = Turno.objects.filter(fecha_turno__gte=fecha_desde)
+
+    # Aplicar filtro de sede (individual o agregado)
+    if sede_filtro == 'todas_medicas':
+        turnos_qs = turnos_qs.filter(sede_servicio__isnull=False)
+    elif sede_filtro == 'todas_farmacia':
+        turnos_qs = turnos_qs.filter(sede_farmacia__isnull=False)
+    elif sede_filtro.startswith('med_'):
+        cod = sede_filtro[4:]
+        turnos_qs = turnos_qs.filter(sede_servicio__sede__cod_sede=cod)
+    elif sede_filtro.startswith('far_'):
+        uid = sede_filtro[4:]
+        turnos_qs = turnos_qs.filter(sede_farmacia__id=uid)
+
+    # ── KPIs ─────────────────────────────────────────────────────────────────
+    total_turnos = turnos_qs.count()
+    atendidos = turnos_qs.filter(estado='atendido').count()
+    no_asistio = turnos_qs.filter(estado='no_asistio').count()
+    cancelados = turnos_qs.filter(estado='cancelado').count()
+    pqrs_pendientes = PQRS.objects.filter(estado='radicado').count()
+
+    eficiencia = round(atendidos / total_turnos * 100, 1) if total_turnos else 0
+    tasa_inasistencia = round(no_asistio / total_turnos * 100, 1) if total_turnos else 0
+    tasa_cancelacion = round(cancelados / total_turnos * 100, 1) if total_turnos else 0
+
+    # ── Distribución por servicio ────────────────────────────────────────────
+    distribucion_raw = (
+        turnos_qs
+        .values('tipo_servicio')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+    tipo_labels = dict(Turno.TIPO_SERVICIO_CHOICES)
+    tipo_colors = {
+        'MEDICINA': 'blue',
+        'LABORATORIO': 'purple',
+        'VACUNACION': 'teal',
+        'FARMACIA': 'amber',
+    }
+    distribucion = []
+    for item in distribucion_raw:
+        ts = item['tipo_servicio']
+        pct = round(item['total'] / total_turnos * 100, 1) if total_turnos else 0
+        distribucion.append({
+            'tipo': ts,
+            'label': tipo_labels.get(ts, ts),
+            'total': item['total'],
+            'porcentaje': pct,
+            'porcentaje_safe': max(pct, 2) if pct > 0 else 0,
+            'color': tipo_colors.get(ts, 'gray'),
+        })
+
+    # ── PQRS Insights ────────────────────────────────────────────────────────
+    pqrs_insights = (
+        PQRS.objects
+        .values('tipo')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+    tipo_pqrs_labels = dict(PQRS.TIPO_CHOICES)
+    insights = []
+    total_pqrs_all = sum(i['total'] for i in pqrs_insights) or 1
+    for item in pqrs_insights:
+        pct = round(item['total'] / total_pqrs_all * 100, 1)
+        insights.append({
+            'tipo': item['tipo'],
+            'label': tipo_pqrs_labels.get(item['tipo'], item['tipo']),
+            'total': item['total'],
+            'porcentaje': pct,
+            'porcentaje_safe': max(pct, 2) if pct > 0 else 0,
+        })
+
+    # ── Opciones para los filtros ────────────────────────────────────────────
+    sedes_medicas = Sede.objects.filter(activo=True).order_by('nombre')
+    sedes_farmacia = SedeFarmacia.objects.filter(activo=True).order_by('nombre')
+
+    contexto = {
+        'total_turnos': total_turnos,
+        'atendidos': atendidos,
+        'no_asistio': no_asistio,
+        'cancelados': cancelados,
+        'eficiencia': eficiencia,
+        'tasa_inasistencia': tasa_inasistencia,
+        'tasa_cancelacion': tasa_cancelacion,
+        'pqrs_pendientes': pqrs_pendientes,
+        'distribucion': distribucion,
+        'insights': insights,
+        'sedes_medicas': sedes_medicas,
+        'sedes_farmacia': sedes_farmacia,
+        'sede_filtro': sede_filtro,
+        'rango_filtro': rango_filtro,
+    }
+    return render(request, 'panel_estadisticas.html', contexto)

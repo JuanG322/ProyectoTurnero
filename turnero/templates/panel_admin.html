@@ -254,7 +254,32 @@
 
             </div>
         </section>
-        
+
+        <!-- Estadísticas y Reportes -->
+        <section class="mb-6">
+            <h3 class="text-lg font-semibold text-Dark-Grey dark:text-dark-text mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-blue dark:text-light-blue">monitoring</span>
+                Inteligencia Operacional
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <a href="{% url 'panel_estadisticas' %}" id="card-estadisticas"
+               class="group bg-blue hover:bg-light-blue rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-4">
+                <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-white">bar_chart</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-1">Estadísticas y Reportes</h3>
+                    <p class="text-white/75 text-sm leading-relaxed">KPIs de atención, distribución por servicio y análisis de PQRS con filtros por sede y período.</p>
+                </div>
+                <div class="flex items-center gap-1 text-white/80 text-sm mt-auto">
+                    <span>Ver dashboard</span>
+                    <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+            </a>
+
+            </div>
+        </section>
     </main>
 
     <script>

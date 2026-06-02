@@ -83,6 +83,12 @@
                 <button type="submit" class="bg-blue hover:bg-light-blue text-white font-medium py-2.5 px-6 rounded-full transition-colors shadow-sm flex items-center gap-2 text-sm">
                     <span class="material-symbols-outlined text-lg">filter_alt</span> Filtrar
                 </button>
+                <!-- Botón Descargar PDF -->
+                <a id="btn-export-pdf"
+                   href="{% url 'exportar_pdf_estadisticas' %}?sede={{ sede_filtro }}&rango={{ rango_filtro }}"
+                   class="border border-blue dark:border-light-blue text-blue dark:text-light-blue hover:bg-blue dark:hover:bg-light-blue hover:text-white font-medium py-2.5 px-6 rounded-full transition-colors shadow-sm flex items-center gap-2 text-sm">
+                    <span class="material-symbols-outlined text-lg">picture_as_pdf</span> Descargar PDF
+                </a>
             </form>
         </section>
 

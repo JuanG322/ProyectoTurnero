@@ -64,4 +64,8 @@ urlpatterns = [
 
     # Panel de Estadísticas y Reportes
     path('admin-panel/estadisticas/', views.panel_estadisticas, name='panel_estadisticas'),
+    path('admin-panel/estadisticas/exportar-pdf/', views.exportar_pdf_estadisticas, name='exportar_pdf_estadisticas'),
+
+    # Chatbot de Navegación
+    path('chatbot/api/', views.chatbot_api, name='chatbot_api'),
 ]

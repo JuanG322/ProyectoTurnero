@@ -4,9 +4,18 @@ Gestiona autenticación, registro, inicio y el flujo completo de consultas médi
 """
 
 import io
+import json
+import os
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from datetime import datetime as dt, timedelta
 
 import qrcode
+from openai import OpenAI as DeepSeekClient
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
@@ -1395,3 +1404,375 @@ def panel_estadisticas(request):
         'rango_filtro': rango_filtro,
     }
     return render(request, 'panel_estadisticas.html', contexto)
+
+
+# =============================================================================
+# Exportar PDF del Panel de Estadísticas
+# =============================================================================
+
+@admin_requerido
+def exportar_pdf_estadisticas(request):
+    """Genera y devuelve un reporte PDF con los mismos filtros del dashboard."""
+    hoy = timezone.localdate()
+
+    # ── Filtros (misma lógica que panel_estadisticas) ─────────────────────────
+    sede_filtro = request.GET.get('sede', '')
+    rango_filtro = request.GET.get('rango', 'mes')
+
+    rango_labels = {
+        'hoy': 'Hoy',
+        '7dias': 'Últimos 7 días',
+        'mes': 'Este mes',
+        'anio': 'Último año',
+    }
+
+    if rango_filtro == 'hoy':
+        fecha_desde = hoy
+    elif rango_filtro == '7dias':
+        fecha_desde = hoy - timedelta(days=7)
+    elif rango_filtro == 'anio':
+        fecha_desde = hoy - timedelta(days=365)
+    else:  # mes (default)
+        fecha_desde = hoy.replace(day=1)
+
+    # ── Queryset base ─────────────────────────────────────────────────────────
+    turnos_qs = Turno.objects.filter(fecha_turno__gte=fecha_desde)
+
+    sede_label = 'Todas las sedes'
+    if sede_filtro == 'todas_medicas':
+        turnos_qs = turnos_qs.filter(sede_servicio__isnull=False)
+        sede_label = 'Todas las sedes médicas'
+    elif sede_filtro == 'todas_farmacia':
+        turnos_qs = turnos_qs.filter(sede_farmacia__isnull=False)
+        sede_label = 'Todas las sedes de farmacia'
+    elif sede_filtro.startswith('med_'):
+        cod = sede_filtro[4:]
+        turnos_qs = turnos_qs.filter(sede_servicio__sede__cod_sede=cod)
+        try:
+            sede_label = Sede.objects.get(cod_sede=cod).nombre
+        except Sede.DoesNotExist:
+            sede_label = cod
+    elif sede_filtro.startswith('far_'):
+        uid = sede_filtro[4:]
+        turnos_qs = turnos_qs.filter(sede_farmacia__id=uid)
+        try:
+            sede_label = SedeFarmacia.objects.get(id=uid).nombre
+        except SedeFarmacia.DoesNotExist:
+            sede_label = uid
+
+    # ── KPIs ─────────────────────────────────────────────────────────────────
+    total_turnos = turnos_qs.count()
+    atendidos = turnos_qs.filter(estado='atendido').count()
+    no_asistio = turnos_qs.filter(estado='no_asistio').count()
+    cancelados = turnos_qs.filter(estado='cancelado').count()
+    pqrs_pendientes = PQRS.objects.filter(estado='radicado').count()
+
+    eficiencia = round(atendidos / total_turnos * 100, 1) if total_turnos else 0
+    tasa_inasistencia = round(no_asistio / total_turnos * 100, 1) if total_turnos else 0
+    tasa_cancelacion = round(cancelados / total_turnos * 100, 1) if total_turnos else 0
+
+    # ── Distribución por servicio ─────────────────────────────────────────────
+    distribucion_raw = (
+        turnos_qs
+        .values('tipo_servicio')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+    tipo_labels = dict(Turno.TIPO_SERVICIO_CHOICES)
+    distribucion = []
+    for item in distribucion_raw:
+        ts = item['tipo_servicio']
+        pct = round(item['total'] / total_turnos * 100, 1) if total_turnos else 0
+        distribucion.append({
+            'label': tipo_labels.get(ts, ts),
+            'total': item['total'],
+            'porcentaje': pct,
+        })
+
+    # ── PQRS Insights ─────────────────────────────────────────────────────────
+    pqrs_insights_qs = (
+        PQRS.objects
+        .values('tipo')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+    tipo_pqrs_labels = dict(PQRS.TIPO_CHOICES)
+    total_pqrs_all = sum(i['total'] for i in pqrs_insights_qs) or 1
+    insights = []
+    for item in pqrs_insights_qs:
+        pct = round(item['total'] / total_pqrs_all * 100, 1)
+        insights.append({
+            'label': tipo_pqrs_labels.get(item['tipo'], item['tipo']),
+            'total': item['total'],
+            'porcentaje': pct,
+        })
+
+    # ── Construcción del PDF ──────────────────────────────────────────────────
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=2 * cm,
+        leftMargin=2 * cm,
+        topMargin=2 * cm,
+        bottomMargin=2 * cm,
+    )
+
+    primary_blue = colors.HexColor('#0960ae')
+    light_grey = colors.HexColor('#848484')
+    dark_grey = colors.HexColor('#515151')
+    bg_grey = colors.HexColor('#f3f4f6')
+
+    styles = getSampleStyleSheet()
+
+    style_title = ParagraphStyle(
+        'ReportTitle',
+        parent=styles['Title'],
+        fontSize=20,
+        textColor=primary_blue,
+        spaceAfter=4,
+        fontName='Helvetica-Bold',
+    )
+    style_subtitle = ParagraphStyle(
+        'ReportSubtitle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=light_grey,
+        spaceAfter=2,
+        fontName='Helvetica',
+    )
+    style_section = ParagraphStyle(
+        'SectionHeader',
+        parent=styles['Heading2'],
+        fontSize=12,
+        textColor=primary_blue,
+        spaceBefore=14,
+        spaceAfter=6,
+        fontName='Helvetica-Bold',
+    )
+    style_body = ParagraphStyle(
+        'Body',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=dark_grey,
+        fontName='Helvetica',
+        leading=14,
+    )
+    style_empty = ParagraphStyle(
+        'Empty',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=light_grey,
+        fontName='Helvetica-Oblique',
+        alignment=TA_CENTER,
+    )
+
+    story = []
+
+    # — Encabezado corporativo —
+    story.append(Paragraph('EPS — Centro Médico', style_title))
+    story.append(Paragraph('Reporte de Estadísticas Operacionales', style_subtitle))
+    story.append(Paragraph(
+        f'Generado el: {hoy.strftime("%d de %B de %Y")}  |  '
+        f'Sede: {sede_label}  |  '
+        f'Período: {rango_labels.get(rango_filtro, rango_filtro)}',
+        style_subtitle,
+    ))
+    story.append(HRFlowable(width='100%', thickness=1.5, color=primary_blue, spaceAfter=10))
+
+    # — KPIs principales —
+    story.append(Paragraph('Indicadores Clave de Desempeño (KPIs)', style_section))
+
+    kpi_data = [
+        ['Indicador', 'Valor', 'Detalle'],
+        ['Total de Turnos', str(total_turnos), '—'],
+        ['Turnos Atendidos', str(atendidos), f'{eficiencia}% de eficiencia'],
+        ['Inasistencias', str(no_asistio), f'{tasa_inasistencia}% del total'],
+        ['Cancelaciones', str(cancelados), f'{tasa_cancelacion}% del total'],
+        ['PQRS Pendientes', str(pqrs_pendientes), 'Estado: Radicado'],
+    ]
+    kpi_table = Table(kpi_data, colWidths=[8 * cm, 3.5 * cm, 6 * cm])
+    kpi_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), primary_blue),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('TOPPADDING', (0, 0), (-1, 0), 8),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('TEXTCOLOR', (0, 1), (-1, -1), dark_grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, bg_grey]),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('ALIGN', (1, 1), (1, -1), 'CENTER'),
+        ('FONTNAME', (1, 1), (1, -1), 'Helvetica-Bold'),
+    ]))
+    story.append(kpi_table)
+
+    # — Distribución por tipo de servicio —
+    story.append(Paragraph('Distribución por Tipo de Servicio', style_section))
+    if distribucion:
+        dist_data = [['Tipo de Servicio', 'Turnos', 'Porcentaje']]
+        for d in distribucion:
+            dist_data.append([d['label'], str(d['total']), f"{d['porcentaje']}%"])
+        dist_table = Table(dist_data, colWidths=[9.5 * cm, 3.5 * cm, 4.5 * cm])
+        dist_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), primary_blue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('TEXTCOLOR', (0, 1), (-1, -1), dark_grey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, bg_grey]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+            ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('ALIGN', (1, 1), (-1, -1), 'CENTER'),
+        ]))
+        story.append(dist_table)
+    else:
+        story.append(Paragraph('No hay datos de turnos para el período y sede seleccionados.', style_empty))
+
+    # — PQRS por tipo —
+    story.append(Paragraph('Resumen de PQRS por Tipo', style_section))
+    if insights:
+        pqrs_data = [['Tipo de PQRS', 'Cantidad', 'Porcentaje']]
+        for i in insights:
+            pqrs_data.append([i['label'], str(i['total']), f"{i['porcentaje']}%"])
+        pqrs_table = Table(pqrs_data, colWidths=[9.5 * cm, 3.5 * cm, 4.5 * cm])
+        pqrs_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), primary_blue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('TEXTCOLOR', (0, 1), (-1, -1), dark_grey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, bg_grey]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+            ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('ALIGN', (1, 1), (-1, -1), 'CENTER'),
+        ]))
+        story.append(pqrs_table)
+    else:
+        story.append(Paragraph('No se han registrado PQRS en el sistema.', style_empty))
+
+    # — Pie de página informativo —
+    story.append(Spacer(1, 0.5 * cm))
+    story.append(HRFlowable(width='100%', thickness=0.5, color=light_grey, spaceAfter=6))
+    story.append(Paragraph(
+        'Este reporte fue generado automáticamente por el sistema de gestión EPS — Centro Médico. '
+        'Para uso interno únicamente.',
+        ParagraphStyle('Footer', parent=styles['Normal'], fontSize=7, textColor=light_grey,
+                       fontName='Helvetica', alignment=TA_CENTER),
+    ))
+
+    doc.build(story)
+    buffer.seek(0)
+
+    nombre_archivo = f'reporte_estadisticas_{hoy.strftime("%Y%m%d")}.pdf'
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+    return response
+
+
+# =============================================================================
+# Chatbot de Navegación — API View (Groq vía OpenAI SDK)
+# =============================================================================
+
+# ── Configuración del proveedor ─────────────────────────────────────────────────────────
+# Proveedor: Groq (free tier) — API compatible con OpenAI SDK ya instalado.
+# Crea tu clave gratuita en: https://console.groq.com/keys
+CHATBOT_MODEL       = 'llama-3.1-8b-instant'
+CHATBOT_BASE_URL    = 'https://api.groq.com/openai/v1'
+CHATBOT_API_KEY_ENV = 'GROQ_API_KEY'
+
+# ── Instrucciones del sistema ─────────────────────────────────────────────────
+CHATBOT_SYSTEM_PROMPT = """\
+Eres el asistente virtual de "Turnero", un sistema de gestión de turnos y atención médica. Tu único objetivo es guiar a los usuarios indicándoles a qué sección del sistema deben dirigirse según lo que necesiten.
+
+ESTRUCTURA DEL SITIO (A dónde debes enviarlos):
+- Si buscan sacar una cita médica o ver a un doctor -> Diles que vayan a la sección "Consultas Médicas".
+- Si preguntan por entrega de medicamentos, medicinas o recetas -> Diles que vayan a la sección "Farmacia".
+- Si necesitan vacunas, inyecciones, exámenes de laboratorio o toma de muestras -> Diles que vayan a la sección "Procedimientos Clínicos".
+- Si quieren poner una queja, reclamo, sugerencia o hacer una pregunta general (PQRS) -> Diles que vayan a la sección "Atención al Cliente".
+- Si preguntan por reportes o métricas -> Diles que vayan al "Panel de Estadísticas" (aclara que es solo para administradores).
+
+REGLAS ESTRICTAS DE COMPORTAMIENTO:
+1. Sé extremadamente breve y directo. Tu respuesta máxima debe ser de 2 oraciones.
+2. No inventes enlaces ni URLs. Solo menciona el nombre de la sección entre comillas.
+3. Responde siempre en un tono amable, servicial y en español de Colombia.
+4. Si el usuario te pregunta algo fuera de estos temas (clima, recetas de cocina, historia, etc.), dile educadamente que solo puedes ayudarle a navegar por el sistema de Turnero.
+"""
+
+
+
+
+@require_POST
+@login_required
+def chatbot_api(request):
+    """
+    Endpoint POST /chatbot/api/
+    Payload JSON  : { "mensaje": "texto del usuario" }
+    Respuesta JSON: { "respuesta": "texto del bot" }
+    """
+    # ── Leer cuerpo JSON ──────────────────────────────────────────────────────
+    try:
+        body = json.loads(request.body)
+        mensaje_usuario = str(body.get('mensaje', '')).strip()
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Solicitud inválida.'}, status=400)
+
+    if not mensaje_usuario:
+        return JsonResponse({'respuesta': 'Por favor escribe un mensaje para que pueda ayudarte.'})
+
+    # Limitar longitud de entrada
+    mensaje_usuario = mensaje_usuario[:500]
+
+    # ── Verificar API key ─────────────────────────────────────────────────────
+    api_key = os.environ.get(CHATBOT_API_KEY_ENV, '')
+    if not api_key:
+        return JsonResponse(
+            {'respuesta': 'El asistente no está configurado aún. Contacta al administrador.'},
+            status=503,
+        )
+
+    # ── Llamada a DeepSeek vía OpenAI SDK ─────────────────────────────────────
+    try:
+        client = DeepSeekClient(
+            api_key=api_key,
+            base_url=CHATBOT_BASE_URL,
+        )
+        completion = client.chat.completions.create(
+            model=CHATBOT_MODEL,
+            messages=[
+                {'role': 'system', 'content': CHATBOT_SYSTEM_PROMPT},
+                {'role': 'user',   'content': mensaje_usuario},
+            ],
+            max_tokens=200,
+            temperature=0.3,
+            stream=False,
+        )
+        respuesta_texto = completion.choices[0].message.content.strip()
+    except Exception as exc:  # noqa: BLE001
+        print(f'[chatbot_api] Error DeepSeek: {type(exc).__name__}: {exc}')
+        return JsonResponse(
+            {'respuesta': 'En este momento no puedo responder. Por favor, intenta más tarde.'},
+            status=200,
+        )
+
+    return JsonResponse({'respuesta': respuesta_texto})
